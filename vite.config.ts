@@ -15,3 +15,7 @@ export default defineConfig(({ mode }) => {
     }
   };
 });
+
+const getEnv = (key: string): string => {
+  return (import.meta.env as Record<string, string>)[`VITE_${key}`] || '';
+};

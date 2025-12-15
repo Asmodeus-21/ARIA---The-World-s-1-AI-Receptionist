@@ -1,8 +1,11 @@
 import { GHLPayload } from '../types';
 
+// Declare process for type safety
+declare const process: { env: Record<string, string | undefined> };
+
 // 🟢 OPTION 1: PASTE YOUR WEBHOOK URL INSIDE THE QUOTES BELOW
 // Example: const MANUAL_WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/..."
-const MANUAL_WEBHOOK_URL = ""; 
+const MANUAL_WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/oNyEJIUPpvJmXIKBtt3u/webhook-trigger/ad920a0c-3420-4dee-b151-cf986e83d480"; 
 
 /**
  * Pushes data to GoHighLevel via Webhook.
@@ -11,8 +14,8 @@ export const pushLeadToGoHighLevel = async (data: GHLPayload): Promise<boolean> 
   // 1. Try to get the Webhook URL from manual entry OR environment variables
   const webhookUrl = 
     MANUAL_WEBHOOK_URL ||
-    (typeof process !== 'undefined' ? process.env.REACT_APP_GHL_WEBHOOK_URL : undefined) || 
-    (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL : undefined) ||
+    process.env.REACT_APP_GHL_WEBHOOK_URL || 
+    process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL ||
     '';
 
   // 2. Log payload for debugging

@@ -14,6 +14,9 @@ import LogoTicker from './components/LogoTicker';
 import TestimonialCarousel from './components/TestimonialCarousel';
 import { PricingPlan } from './types';
 
+// Declare global process for Vite's define config
+declare const process: { env: Record<string, string | undefined> };
+
 // Helper icon component since 'TrendingDown' isn't standard in all Lucide versions
 const TrendingDownIcon = ({ size, className }: { size?: number, className?: string }) => (
   <svg 
@@ -111,12 +114,10 @@ const IMPACT_STATS = [
 
 // --- Pricing Data ---
 
-// Retrieves env variable with multiple fallbacks
+// Retrieves env variable with multiple fallbacks (Vite + process.env compatibility)
 const getEnv = (key: string) => {
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env[key] || process.env[`REACT_APP_${key}`] || process.env[`NEXT_PUBLIC_${key}`] || '';
-  }
-  return '';
+  // Try VITE_ prefixed versions first (Vite convention)
+  return (process.env as any)[`VITE_${key}`] || process.env[key] || (process.env as any)[`REACT_APP_${key}`] || (process.env as any)[`NEXT_PUBLIC_${key}`] || '';
 };
 
 const PRICING_PLANS: PricingPlan[] = [
@@ -154,6 +155,11 @@ const PRICING_PLANS: PricingPlan[] = [
     stripeLink: "", // Enterprise usually requires a sales call
   }
 ];
+
+// Debug: Log pricing plans to verify env variables are loaded
+if (typeof window !== 'undefined') {
+  console.log('PRICING_PLANS loaded:', PRICING_PLANS.map(p => ({ name: p.name, stripeLink: p.stripeLink ? '✓ Loaded' : '✗ Empty' })));
+}
 
 // --- Components ---
 
@@ -676,7 +682,18 @@ export default function App() {
 
       </main>
 
-      <GetStartedModal 
-        isOpen={isFormOpen} 
-        onClose={() => setIsFormOpen(false)} 
-        openLive
+    <GetStartedModal 
+  isOpen={isFormOpen} 
+  onClose={() => setIsFormOpen(false)} 
+  openLiveDemo={() => setIsLiveOpen(true)}
+  selectedPlan={selectedPlan}
+/>
+
+<LiveAgentModal
+  isOpen={isLiveOpen}
+  onClose={() => setIsLiveOpen(false)}
+/>
+
+</div>
+  );
+};

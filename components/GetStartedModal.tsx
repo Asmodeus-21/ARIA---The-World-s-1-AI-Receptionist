@@ -15,6 +15,16 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Debug logging
+  React.useEffect(() => {
+    if (isOpen && selectedPlan) {
+      console.log('GetStartedModal opened with plan:', { 
+        name: selectedPlan.name, 
+        stripeLink: selectedPlan.stripeLink 
+      });
+    }
+  }, [isOpen, selectedPlan]);
+  
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
