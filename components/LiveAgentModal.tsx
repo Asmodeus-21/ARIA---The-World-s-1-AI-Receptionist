@@ -60,6 +60,7 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const audioSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const isMutedRef = useRef(isMuted);
 
   // Establish WebSocket connection and initialize audio
   const startSession = async () => {
@@ -111,19 +112,15 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       const scriptProcessor = inputContextRef.current.createScriptProcessor(4096, 1, 1);
       processorRef.current = scriptProcessor;
 
-      scriptProcessor.onaudioprocess = async (e) => {
+      scriptProcessor.onaudioprocess = (e) => {
         // Don't send audio if muted or WebSocket not ready
-        if (isMuted || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+        if (isMutedRef.current || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
         
         try {
           const inputData = e.inputBuffer.getChannelData(0);
-          const inputSampleRate = e.inputBuffer.sampleRate;
           
-          // Resample from input sample rate to 16kHz
-          const resampledData = await resampleAudio(inputData, inputSampleRate, 16000);
-          
-          // Convert to base64
-          const base64Audio = pcmToBase64(resampledData);
+          // Convert to base64 directly (already at 16kHz from audio context)
+          const base64Audio = pcmToBase64(inputData);
           
           // Send to ElevenLabs WebSocket
           if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -137,7 +134,8 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       };
 
       audioSource.connect(scriptProcessor);
-      scriptProcessor.connect(inputContextRef.current.destination);
+      // Don't connect to destination - only send to WebSocket
+      // scriptProcessor.connect(inputContextRef.current.destination);
 
       // 4. Connect to ElevenLabs WebSocket
       const ws = new WebSocket(ELEVENLABS_WS_URL);
@@ -145,6 +143,16 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
 
       ws.onopen = () => {
         console.log('Connected to ElevenLabs Conversational AI');
+        
+        // CRITICAL: Send conversation initiation message
+        // This tells ElevenLabs to start the conversation
+        ws.send(JSON.stringify({
+          type: 'conversation_initiation_client_data',
+          conversation_config: {
+            agent_id: ELEVENLABS_AGENT_ID
+          }
+        }));
+        
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
@@ -304,6 +312,11 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
   const toggleMute = () => {
     setIsMuted(!isMuted);
   };
+
+  // Update isMutedRef whenever isMuted changes
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
 
   useEffect(() => {
     if (isOpen) {
