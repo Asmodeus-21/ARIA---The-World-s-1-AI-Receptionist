@@ -334,7 +334,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      <Analytics />
       <Header onOpenForm={() => openForm()} onOpenLive={openLive} />
 
       <main>
@@ -696,6 +695,7 @@ export default function App() {
   onClose={() => setIsLiveOpen(false)}
 />
 
-</div>
+<Analytics />
+    </div>
   );
 };
