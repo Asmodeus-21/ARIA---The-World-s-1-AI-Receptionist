@@ -24,17 +24,8 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
-  // Initialize Gemini with Env Variable Fallbacks
-  const getApiKey = () => {
-    if (typeof process !== 'undefined' && process.env) {
-      return process.env.REACT_APP_GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.API_KEY || '';
-    }
-    return '';
-  };
-
-  // NOTE: In production, consider proxying this request to hide the key, 
-  // or restrict the key to your domain in Google AI Studio.
-  const ai = new GoogleGenAI({ apiKey: getApiKey() });
+  // Initialize Gemini API
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const startSession = async () => {
     setError(null);

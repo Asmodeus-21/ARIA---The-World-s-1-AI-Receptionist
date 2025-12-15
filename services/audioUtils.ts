@@ -6,8 +6,16 @@ export const createBlob = (data: Float32Array): Blob => {
   for (let i = 0; i < l; i++) {
     int16[i] = data[i] * 32768;
   }
+  
+  const bytes = new Uint8Array(int16.buffer);
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  
   return {
-    data: btoa(String.fromCharCode(...new Uint8Array(int16.buffer))),
+    data: btoa(binary),
     mimeType: 'audio/pcm;rate=16000',
   };
 };
