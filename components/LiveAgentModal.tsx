@@ -41,8 +41,17 @@ interface ElevenLabsMessage {
 }
 
 const ELEVENLABS_AGENT_ID = 'agent_4501kckg7737f2dtvd8589hzj5b7';
-// Simple WebSocket URL without any auth - just agent_id
-const ELEVENLABS_WS_URL = `wss://api.elevenlabs.io/v1/convai?agent_id=${ELEVENLABS_AGENT_ID}`;
+const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY || '';
+
+// Correct WebSocket URL format for ElevenLabs Conversational AI with API key
+const getElevenLabsURL = () => {
+  const baseUrl = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${ELEVENLABS_AGENT_ID}`;
+  if (ELEVENLABS_API_KEY) {
+    return `${baseUrl}&api_key=${ELEVENLABS_API_KEY}`;
+  }
+  return baseUrl;
+};
+const ELEVENLABS_WS_URL = getElevenLabsURL();
 
 const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -96,22 +105,25 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
 
       streamRef.current = stream;
 
-      // Setup audio input processing
+      // Setup audio input processing using ScriptProcessor (simpler for now, can migrate to AudioWorklet later)
       if (!inputContextRef.current) throw new Error('Audio context not initialized');
       
       const audioSource = inputContextRef.current.createMediaStreamSource(stream);
       sourceRef.current = audioSource;
       
+      // Use ScriptProcessor - will migrate to AudioWorklet for better performance
       const scriptProcessor = inputContextRef.current.createScriptProcessor(4096, 1, 1);
       processorRef.current = scriptProcessor;
 
       scriptProcessor.onaudioprocess = (e) => {
+        // Skip if muted or WebSocket not ready
         if (isMutedRef.current || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
         
         try {
           const inputData = e.inputBuffer.getChannelData(0);
           const base64Audio = pcmToBase64(inputData);
           
+          // Send audio chunk to ElevenLabs
           wsRef.current.send(JSON.stringify({
             user_audio_chunk: base64Audio
           }));
@@ -121,6 +133,8 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       };
 
       audioSource.connect(scriptProcessor);
+      // Connect to destination for audio loopback (optional - remove if not needed)
+      scriptProcessor.connect(inputContextRef.current.destination);
       console.log('✓ Audio input ready');
 
       // Connect to ElevenLabs
