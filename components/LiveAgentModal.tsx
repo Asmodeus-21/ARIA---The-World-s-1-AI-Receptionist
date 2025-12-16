@@ -40,7 +40,7 @@ interface ElevenLabsMessage {
   [key: string]: any;
 }
 
-const ELEVENLABS_AGENT_ID = 'agent_7701kcj3ms7tff8tkh857ssbn604';
+const ELEVENLABS_AGENT_ID = 'agent_4501kckg7737f2dtvd8589hzj5b7';
 // Simple WebSocket URL without any auth - just agent_id
 const ELEVENLABS_WS_URL = `wss://api.elevenlabs.io/v1/convai?agent_id=${ELEVENLABS_AGENT_ID}`;
 
