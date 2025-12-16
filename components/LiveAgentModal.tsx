@@ -193,13 +193,13 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
               
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
 
-              // Decode audio at 24000 Hz (ElevenLabs rate)
-              let audioBuffer = await decodeAudioData(audioData, ctx, 24000);
+              // Decode audio at 16000 Hz (ElevenLabs PCM rate)
+              let audioBuffer = await decodeAudioData(audioData, ctx, 16000);
               console.log('✓ Audio decoded, duration:', audioBuffer.duration, 'sampleRate:', audioBuffer.sampleRate);
               
               // Resample if output context uses different sample rate
-              if (ctx.sampleRate !== 24000) {
-                console.log('🔄 Resampling from 24000 Hz to', ctx.sampleRate, 'Hz');
+              if (ctx.sampleRate !== 16000) {
+                console.log('🔄 Resampling from 16000 Hz to', ctx.sampleRate, 'Hz');
                 audioBuffer = await resampleAudio(audioBuffer, ctx.sampleRate, ctx);
                 console.log('✓ Resampled, new duration:', audioBuffer.duration);
               }
