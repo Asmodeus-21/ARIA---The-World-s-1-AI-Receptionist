@@ -168,38 +168,59 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       ws.onmessage = async (event) => {
         try {
           const message: ElevenLabsMessage = JSON.parse(event.data);
+          console.log('📨 WebSocket message received:', message.type);
 
           // Handle agent audio response
           if (message.type === 'audio' && message.audio) {
-            console.log('🔊 Playing agent audio');
+            console.log('🔊 Playing agent audio, data length:', message.audio.length);
             setIsAgentSpeaking(true);
             
-            if (!outputContextRef.current || outputContextRef.current.state === 'closed') return;
+            if (!outputContextRef.current) {
+              console.error('❌ Output context is null');
+              return;
+            }
+
+            if (outputContextRef.current.state === 'closed') {
+              console.error('❌ Output context is closed');
+              return;
+            }
 
             try {
               const ctx = outputContextRef.current;
+              console.log('🎵 Output context state:', ctx.state, 'Current time:', ctx.currentTime);
+              
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
 
               const audioBuffer = await decodeAudioData(message.audio, ctx, 24000);
+              console.log('✓ Audio decoded, duration:', audioBuffer.duration, 'sampleRate:', audioBuffer.sampleRate);
+              
               const bufferSource = ctx.createBufferSource();
               bufferSource.buffer = audioBuffer;
+              console.log('✓ Buffer source created');
               
               if (outputNodeRef.current) {
                 bufferSource.connect(outputNodeRef.current);
+                console.log('✓ Connected to output gain node, gain value:', outputNodeRef.current.gain.value);
+              } else {
+                console.error('❌ Output gain node is null');
+                return;
               }
 
               audioSourcesRef.current.push(bufferSource);
               bufferSource.onended = () => {
+                console.log('✓ Audio playback ended');
                 audioSourcesRef.current = audioSourcesRef.current.filter(s => s !== bufferSource);
                 if (audioSourcesRef.current.length === 0) {
                   setIsAgentSpeaking(false);
                 }
               };
 
+              console.log('▶️ Starting audio playback at time:', nextStartTimeRef.current);
               bufferSource.start(nextStartTimeRef.current);
               nextStartTimeRef.current += audioBuffer.duration;
             } catch (err) {
-              console.error("Error playing audio:", err);
+              console.error("❌ Error playing audio:", err);
+              setIsAgentSpeaking(false);
             }
           }
 

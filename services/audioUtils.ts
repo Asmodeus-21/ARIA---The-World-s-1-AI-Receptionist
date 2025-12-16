@@ -53,8 +53,12 @@ export const decodeAudioData = async (
   ctx: AudioContext,
   sampleRate: number = 24000
 ): Promise<AudioBuffer> => {
+  console.log('🔄 Decoding audio... Base64 length:', base64Data.length, 'Sample rate:', sampleRate);
+  
   const binaryString = atob(base64Data);
   const len = binaryString.length;
+  console.log('📊 Binary data length:', len, 'bytes');
+  
   const bytes = new Uint8Array(len);
   
   for (let i = 0; i < len; i++) {
@@ -64,6 +68,7 @@ export const decodeAudioData = async (
   // Convert bytes to int16 samples
   const dataInt16 = new Int16Array(bytes.buffer);
   const frameCount = dataInt16.length;
+  console.log('📈 Frame count (int16 samples):', frameCount);
   
   // Create mono AudioBuffer
   const buffer = ctx.createBuffer(1, frameCount, sampleRate);
@@ -74,6 +79,7 @@ export const decodeAudioData = async (
     channelData[i] = dataInt16[i] / 0x8000;
   }
   
+  console.log('✅ Audio buffer created successfully, duration:', buffer.duration, 'seconds');
   return buffer;
 };
 
