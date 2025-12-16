@@ -169,18 +169,10 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
         try {
           const message: ElevenLabsMessage = JSON.parse(event.data);
           console.log('📨 WebSocket message received:', message.type);
-          
-          // Debug: log full message for audio types
-          if (message.type === 'audio') {
-            console.log('🔍 Full audio message:', JSON.stringify(message).substring(0, 200));
-            console.log('🔍 Message keys:', Object.keys(message));
-            console.log('🔍 message.audio:', message.audio);
-            console.log('🔍 message.data:', (message as any).data);
-          }
 
-          // Handle agent audio response
-          if (message.type === 'audio' && (message.audio || (message as any).data)) {
-            const audioData = message.audio || (message as any).data;
+          // Handle agent audio response - audio_base_64 is inside audio_event
+          const audioData = (message as any).audio_event?.audio_base_64;
+          if (message.type === 'audio' && audioData) {
             console.log('🔊 Playing agent audio, data length:', audioData.length);
             setIsAgentSpeaking(true);
             
