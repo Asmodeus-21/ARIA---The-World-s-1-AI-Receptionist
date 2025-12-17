@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Button from './components/Button';
 import GetStartedModal from './components/GetStartedModal';
-import LiveAgentModal from './components/LiveAgentModal';
+import AriaVoiceAgent from './components/AriaVoiceAgent';
 import LogoTicker from './components/LogoTicker';
 import TestimonialCarousel from './components/TestimonialCarousel';
 import { PricingPlan } from './types';
@@ -719,7 +719,8 @@ export default function App() {
   selectedPlan={selectedPlan}
 />
 
-<LiveAgentModal
+<AriaVoiceAgent
+  agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
   isOpen={isLiveOpen}
   onClose={() => setIsLiveOpen(false)}
 />

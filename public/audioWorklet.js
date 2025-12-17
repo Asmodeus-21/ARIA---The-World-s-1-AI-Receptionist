@@ -21,10 +21,17 @@ class MicrophoneProcessor extends AudioWorkletProcessor {
     const input = inputs[0];
     
     // Debug: Log connection status
-    if (!this.frameCounter) this.frameCounter = 0;
+    if (!this.frameCounter) {
+      this.frameCounter = 0;
+      this.firstProcessTime = Date.now();
+      console.log('[AudioWorklet] First process() called! Time since registration: ', Date.now() - this.firstProcessTime, 'ms');
+    }
     this.frameCounter++;
     if (this.frameCounter % 100 === 0) {
-      console.log('[AudioWorklet] Processing frame', this.frameCounter, 'muted:', this.isMuted, 'has input:', !!input, 'has channel:', !!(input && input[0]));
+      console.log('[AudioWorklet] Processing frame #' + this.frameCounter + ', muted=' + this.isMuted + ', hasInput=' + !!input + ', hasChannel=' + !!(input && input[0]));
+    }
+    if (this.frameCounter === 1) {
+      console.log('[AudioWorklet] FIRST FRAME - inputs.length:', inputs.length, 'input:', !!input, 'channels:', input ? input.length : 0);
     }
     
     // Skip if no input or muted
