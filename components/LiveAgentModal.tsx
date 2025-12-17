@@ -70,7 +70,71 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const audioSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const audioQueueRef = useRef<Array<{ buffer: AudioBuffer; duration: number }>>([]);
+  const isPlayingRef = useRef(false);
+  const inputAudioQueueRef = useRef<Float32Array[]>([]);
   const isMutedRef = useRef(isMuted);
+
+  // Process audio queue sequentially to prevent overlapping/multiple voices
+  const processAudioQueue = (ctx: AudioContext) => {
+    // Guard: if already processing, don't start another instance
+    if (isPlayingRef.current) {
+      console.log('⚠️ Already playing, not starting another playback');
+      return;
+    }
+
+    if (audioQueueRef.current.length === 0) {
+      isPlayingRef.current = false;
+      console.log('✅ Audio queue empty, playback finished');
+      return;
+    }
+
+    // Prevent concurrent execution
+    isPlayingRef.current = true;
+    const { buffer } = audioQueueRef.current.shift()!;
+    
+    console.log('📊 Queue status - remaining items:', audioQueueRef.current.length, 'currently playing:', isPlayingRef.current);
+    
+    if (!buffer) {
+      console.error('❌ Buffer is null, skipping playback');
+      isPlayingRef.current = false;
+      return;
+    }
+    
+    const bufferSource = ctx.createBufferSource();
+    bufferSource.buffer = buffer;
+    
+    if (!outputNodeRef.current) {
+      console.error('❌ Output node is null, cannot connect');
+      isPlayingRef.current = false;
+      return;
+    }
+    
+    bufferSource.connect(outputNodeRef.current);
+    audioSourcesRef.current.push(bufferSource);
+
+    // When this source ends, play the next one in queue
+    bufferSource.onended = () => {
+      console.log('✓ Audio chunk finished, checking queue for more');
+      audioSourcesRef.current = audioSourcesRef.current.filter(s => s !== bufferSource);
+      isPlayingRef.current = false; // Mark as not playing before processing queue
+      
+      if (audioQueueRef.current.length === 0) {
+        if (audioSourcesRef.current.length === 0) {
+          setIsAgentSpeaking(false);
+          console.log('✅ All audio finished, agent stopped speaking');
+        }
+      } else {
+        // Play next item in queue
+        console.log('▶️ Processing next audio from queue');
+        processAudioQueue(ctx);
+      }
+    };
+
+    console.log('▶️ Starting audio playback now (buffer duration:', buffer.duration.toFixed(2) + 's)');
+    bufferSource.start(ctx.currentTime);
+  };
 
   // Establish WebSocket connection and initialize audio
   const startSession = async () => {
@@ -82,14 +146,56 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       // Setup audio contexts for input and output
       console.log('🔧 Creating audio contexts...');
       inputContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-      // Use system's default sample rate for output (typically 48000 Hz)
       outputContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       
+      // CRITICAL: Resume audio contexts - they start in 'suspended' state on most browsers
+      // Audio won't work until context is in 'running' state
+      if (inputContextRef.current.state === 'suspended') {
+        console.log('⏸ Input context suspended, resuming...');
+        await inputContextRef.current.resume();
+        console.log('✓ Input context resumed, state:', inputContextRef.current.state);
+      }
+      
+      if (outputContextRef.current.state === 'suspended') {
+        console.log('⏸ Output context suspended, resuming...');
+        await outputContextRef.current.resume();
+        console.log('✓ Output context resumed, state:', outputContextRef.current.state);
+      }
+      
+      // CRITICAL FIX: Create a MediaStreamAudioDestinationNode for proper audio routing on iOS/Safari
+      // This ensures audio is routed to system speakers instead of just the context destination
+      const audioDestination = outputContextRef.current.createMediaStreamDestination();
       outputNodeRef.current = outputContextRef.current.createGain();
-      outputNodeRef.current.connect(outputContextRef.current.destination);
+      outputNodeRef.current.gain.value = 1; // Ensure full volume
+      
+      // Connect ONLY to MediaStreamDestination + audio element
+      // (Do NOT also connect to context.destination as this causes duplicate playback)
+      outputNodeRef.current.connect(audioDestination);
+      
+      // Create an audio element to play the media stream
+      // This is critical for iOS/Safari where Web Audio API alone won't produce speaker output
+      const audioElement = new Audio();
+      audioElement.srcObject = audioDestination.stream;
+      audioElement.playsInline = true; // iOS requires this
+      audioElement.setAttribute('playsinline', 'true'); // iOS fallback attribute
+      audioElement.autoplay = true; // Start playing when stream has data
+      audioElement.muted = false; // IMPORTANT: audio must NOT be muted
+      audioElement.volume = 1; // Maximum volume
+      audioElement.crossOrigin = 'anonymous'; // For CORS compatibility
+      
+      // Store reference for cleanup
+      audioElementRef.current = audioElement;
+      
+      // Attempt to play. May fail due to browser autoplay restrictions, but that's OK
+      // The audio will resume playing as soon as there's user interaction or the stream has significant audio
+      audioElement.play()
+        .then(() => console.log('✓ Audio element playing'))
+        .catch(err => console.warn('⚠️ Audio element autoplay blocked (requires user interaction first):', err.message));
+      
       nextStartTimeRef.current = 0;
       audioSourcesRef.current = [];
       console.log('✓ Audio contexts ready. Output sample rate:', outputContextRef.current.sampleRate);
+      console.log('✓ Audio routing configured for cross-platform compatibility (iOS/macOS/Android/Desktop)');
 
       // Request microphone access
       console.log('🎤 Requesting microphone...');
@@ -112,47 +218,105 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       const audioSource = inputContextRef.current.createMediaStreamSource(stream);
       sourceRef.current = audioSource;
       
+      // Add input gain node to amplify quiet microphone input
+      // Microphone input is often very weak and needs amplification for proper encoding
+      const inputGainNode = inputContextRef.current.createGain();
+      inputGainNode.gain.value = 3; // Amplify by 3x (can be adjusted 1-10 based on needs)
+      console.log('🔊 Input gain set to 3x amplification');
+      
+      // Connect: microphone → gain → processing
+      audioSource.connect(inputGainNode);
+      
       // Load and register the audio worklet
       console.log('⚙️ Loading audio worklet processor...');
+      let isAudioWorkletSupported = true;
       try {
         await inputContextRef.current.audioWorklet.addModule('/audioWorklet.js');
         console.log('✓ Audio worklet loaded');
       } catch (err) {
-        console.warn('⚠️ AudioWorklet not available, using fallback:', err);
-        // Fallback to a simpler approach if AudioWorklet fails
-        setError('Audio processing unavailable on this browser');
-        setIsConnecting(false);
-        return;
+        console.warn('⚠️ AudioWorklet not available (common on iOS/Safari), using fallback:', err);
+        isAudioWorkletSupported = false;
+        // We'll use ScriptProcessorNode fallback instead of failing
       }
 
-      // Create AudioWorkletNode
-      const workletNode = new AudioWorkletNode(inputContextRef.current, 'audio-input-processor');
-      workletNodeRef.current = workletNode;
-
-      // Handle audio data from the worklet
-      workletNode.port.onmessage = (event) => {
-        if (event.data.type === 'audio' && event.data.data) {
-          // Skip if muted or WebSocket not ready
-          if (isMutedRef.current || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+      // Audio processing handler - works with both AudioWorklet and ScriptProcessorNode
+      const handleAudioData = (inputData: Float32Array) => {
+        // If muted, skip entirely
+        if (isMutedRef.current) {
+          console.warn('⏸ Audio captured but muted - skipping');
+          return;
+        }
+        
+        try {
+          // CRITICAL: Make a copy of the input data because Web Audio API reuses buffers
+          // If we don't copy, we'll be encoding stale/recycled data
+          const audioDataCopy = new Float32Array(inputData);
           
-          try {
-            const inputData = event.data.data;
-            const base64Audio = pcmToBase64(inputData);
-            
-            // Send audio chunk to ElevenLabs
+          // Check if we're actually capturing audio (not all zeros)
+          const max = Math.max(...Array.from(audioDataCopy).map(Math.abs));
+          console.log('🎤 Audio captured - peak level:', max.toFixed(4), 'samples:', audioDataCopy.length);
+          
+          // Note: Low peak levels are normal for microphone input and are amplified by the GainNode
+          // Only warn if audio is completely silent (peak near zero)
+          if (max < 0.00001) {
+            console.warn('⚠️ Audio may be completely silent - verify microphone is working');
+          }
+          
+          const base64Audio = pcmToBase64(audioDataCopy);
+          
+          // If WebSocket is ready, send immediately
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({
               user_audio_chunk: base64Audio
             }));
-          } catch (err) {
-            console.error("Error sending audio:", err);
+            console.log('✅ Sent to ARIA - base64 size:', base64Audio.length);
+          } else {
+            // If not ready yet, queue for later
+            const wsStatus = wsRef.current 
+              ? `readyState: ${wsRef.current.readyState} (${['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'][wsRef.current.readyState] || 'UNKNOWN'})`
+              : 'undefined/null';
+            console.warn('⏳ WebSocket not ready (wsRef.current status:', wsStatus, ') - queueing audio chunk');
+            inputAudioQueueRef.current.push(audioDataCopy);
           }
+        } catch (err) {
+          console.error("Error sending audio:", err);
         }
       };
 
-      // Connect audio graph: microphone → worklet → destination
-      audioSource.connect(workletNode);
-      workletNode.connect(inputContextRef.current.destination);
-      console.log('✓ Audio input ready (using AudioWorkletNode)');
+      if (isAudioWorkletSupported) {
+        // Use AudioWorkletNode (preferred method)
+        const workletNode = new AudioWorkletNode(inputContextRef.current, 'audio-input-processor');
+        workletNodeRef.current = workletNode;
+
+        // Handle audio data from the worklet
+        workletNode.port.onmessage = (event) => {
+          if (event.data.type === 'audio' && event.data.data) {
+            console.log('📡 AudioWorklet sent data - peak:', event.data.peakLevel?.toFixed(4) || 'N/A');
+            handleAudioData(event.data.data);
+          }
+        };
+
+        // Connect audio graph: microphone → gain → worklet → destination
+        inputGainNode.connect(workletNode);
+        workletNode.connect(inputContextRef.current.destination);
+        console.log('✓ Audio input ready (using AudioWorkletNode with gain amplification)');
+      } else {
+        // Fallback to ScriptProcessorNode for iOS/Safari
+        console.log('⚠️ Using ScriptProcessorNode fallback for audio input');
+        const scriptNode = inputContextRef.current.createScriptProcessor(4096, 1, 1);
+        
+        scriptNode.onaudioprocess = (event) => {
+          // IMPORTANT: Get a COPY of the channel data, not a reference
+          // The input buffer is reused, so we must copy it immediately
+          const inputData = new Float32Array(event.inputBuffer.getChannelData(0));
+          handleAudioData(inputData);
+        };
+
+        // Connect audio graph: microphone → gain → script processor → destination
+        inputGainNode.connect(scriptNode);
+        scriptNode.connect(inputContextRef.current.destination);
+        console.log('✓ Audio input ready (using ScriptProcessorNode fallback)');
+      }
 
       // Connect to ElevenLabs
       console.log('🔗 Connecting WebSocket to:', ELEVENLABS_WS_URL);
@@ -160,10 +324,30 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('✅ CONNECTED to ElevenLabs!');
+        console.log('✅ CONNECTED to ElevenLabs! WebSocket readyState:', ws.readyState);
         setIsConnected(true);
         setIsConnecting(false);
         setError(null);
+        
+        // Flush any queued audio chunks from before connection
+        const queuedCount = inputAudioQueueRef.current.length;
+        console.log('📤 Flushing', queuedCount, 'queued audio chunks');
+        let sentCount = 0;
+        while (inputAudioQueueRef.current.length > 0) {
+          const queuedAudio = inputAudioQueueRef.current.shift();
+          if (queuedAudio) {
+            try {
+              const base64Audio = pcmToBase64(queuedAudio);
+              ws.send(JSON.stringify({
+                user_audio_chunk: base64Audio
+              }));
+              sentCount++;
+            } catch (err) {
+              console.error('❌ Error sending queued audio:', err);
+            }
+          }
+        }
+        console.log(`✅ Queued audio flushed (${sentCount}/${queuedCount} sent), ready for live capture`);
       };
 
       ws.onmessage = async (event) => {
@@ -176,6 +360,14 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
           if (message.type === 'audio' && audioData) {
             console.log('🔊 Playing agent audio, data length:', audioData.length);
             setIsAgentSpeaking(true);
+            
+            // CRITICAL: Resume audio element playback when audio arrives
+            // Some browsers require this after initial autoplay is blocked
+            if (audioElementRef.current && audioElementRef.current.paused) {
+              audioElementRef.current.play()
+                .then(() => console.log('✓ Resumed audio element playback'))
+                .catch(err => console.warn('⚠️ Could not resume audio element:', err.message));
+            }
             
             if (!outputContextRef.current) {
               console.error('❌ Output context is null');
@@ -190,8 +382,6 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
             try {
               const ctx = outputContextRef.current;
               console.log('🎵 Output context state:', ctx.state, 'Current time:', ctx.currentTime);
-              
-              nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
 
               // Decode audio at 16000 Hz (ElevenLabs PCM rate)
               let audioBuffer = await decodeAudioData(audioData, ctx, 16000);
@@ -204,30 +394,18 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
                 console.log('✓ Resampled, new duration:', audioBuffer.duration);
               }
               
-              const bufferSource = ctx.createBufferSource();
-              bufferSource.buffer = audioBuffer;
-              console.log('✓ Buffer source created');
+              // Add to queue instead of playing immediately
+              audioQueueRef.current.push({ buffer: audioBuffer, duration: audioBuffer.duration });
+              console.log('📋 Audio queued. Total in queue:', audioQueueRef.current.length, 'Currently playing:', isPlayingRef.current);
               
-              if (outputNodeRef.current) {
-                bufferSource.connect(outputNodeRef.current);
-                console.log('✓ Connected to output gain node, gain value:', outputNodeRef.current.gain.value);
+              // Process queue if not already playing
+              // Double-check that we're not already processing
+              if (!isPlayingRef.current && audioSourcesRef.current.length === 0) {
+                console.log('🚀 Starting queue processor');
+                processAudioQueue(ctx);
               } else {
-                console.error('❌ Output gain node is null');
-                return;
+                console.log('⏳ Already processing queue, new chunk will be played in sequence');
               }
-
-              audioSourcesRef.current.push(bufferSource);
-              bufferSource.onended = () => {
-                console.log('✓ Audio playback ended');
-                audioSourcesRef.current = audioSourcesRef.current.filter(s => s !== bufferSource);
-                if (audioSourcesRef.current.length === 0) {
-                  setIsAgentSpeaking(false);
-                }
-              };
-
-              console.log('▶️ Starting audio playback at time:', nextStartTimeRef.current);
-              bufferSource.start(nextStartTimeRef.current);
-              nextStartTimeRef.current += audioBuffer.duration;
             } catch (err) {
               console.error("❌ Error playing audio:", err);
               setIsAgentSpeaking(false);
@@ -236,8 +414,12 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
 
           if (message.type === 'interruption') {
             console.log('⏸ User interrupted');
+            // Stop all sources immediately
             audioSourcesRef.current.forEach(s => { try { s.stop(); } catch (e) {} });
             audioSourcesRef.current = [];
+            // Clear the queue
+            audioQueueRef.current = [];
+            isPlayingRef.current = false;
             setIsAgentSpeaking(false);
           }
 
@@ -277,6 +459,22 @@ const LiveAgentModal: React.FC<LiveAgentModalProps> = ({ isOpen, onClose }) => {
       }
     });
     audioSourcesRef.current = [];
+    
+    // Clear both output and input queues
+    audioQueueRef.current = [];
+    inputAudioQueueRef.current = [];
+    isPlayingRef.current = false;
+
+    // Cleanup audio element for proper iOS audio routing
+    if (audioElementRef.current) {
+      try {
+        audioElementRef.current.pause();
+        audioElementRef.current.srcObject = null;
+      } catch (e) {
+        console.warn('Error cleaning up audio element:', e);
+      }
+      audioElementRef.current = null;
+    }
 
     // Close WebSocket
     if (wsRef.current) {
