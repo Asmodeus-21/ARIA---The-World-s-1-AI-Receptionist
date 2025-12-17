@@ -1,71 +1,55 @@
-﻿/* ARIA Voice Agent - ElevenLabs Widget Theming */
+﻿/* ARIA Voice Overlay - Clean Fullscreen Implementation */
 
+/* Fullscreen dark blur */
 .aria-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  z-index: 9999;
+  background: rgba(2, 6, 23, 0.75);
+  backdrop-filter: blur(12px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
   animation: fadeIn 0.3s ease-out;
 }
 
-.aria-container {
-  position: relative;
-  max-width: 500px;
-  width: 90%;
-  max-height: 85vh;
+/* Center the widget only */
+.aria-widget-center {
+  width: 420px;
   animation: slideIn 0.3s ease-out;
 }
 
-.aria-close-button {
+/* The ElevenLabs element */
+elevenlabs-convai {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  display: block;
+}
+
+/* Close button */
+.aria-close {
   position: absolute;
-  top: -50px;
-  right: 0;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.08);
   color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 10000;
 }
 
-.aria-close-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
-}
-
-.aria-widget-wrapper {
-  border-radius: 20px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #0a0e27 0%, #16213e 100%);
-  border: 1px solid rgba(0, 200, 255, 0.3);
-  box-shadow: 
-    0 0 30px rgba(0, 200, 255, 0.2),
-    0 0 60px rgba(0, 100, 200, 0.1),
-    inset 0 0 30px rgba(0, 200, 255, 0.05);
-  position: relative;
-}
-
-.aria-widget-wrapper::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(180deg, rgba(0, 200, 255, 0.15) 0%, transparent 100%);
-  pointer-events: none;
-  z-index: 1;
-  border-radius: 20px 20px 0 0;
+.aria-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 /* Animations */
@@ -80,38 +64,27 @@
 
 @keyframes slideIn {
   from {
-    transform: scale(0.95) translateY(20px);
+    transform: scale(0.95);
     opacity: 0;
   }
   to {
-    transform: scale(1) translateY(0);
+    transform: scale(1);
     opacity: 1;
   }
 }
 
-/* Dark theme */
-.aria-widget-wrapper {
-  color-scheme: dark;
-}
-
-/* Premium glow on focus */
-.aria-container:focus-within .aria-widget-wrapper {
-  box-shadow: 
-    0 0 40px rgba(0, 200, 255, 0.4),
-    0 0 80px rgba(0, 100, 200, 0.2),
-    inset 0 0 40px rgba(0, 200, 255, 0.1);
-}
-
 /* Responsive */
 @media (max-width: 640px) {
-  .aria-container {
-    width: 95%;
-    max-height: 90vh;
+  .aria-widget-center {
+    width: 90%;
+    max-width: 420px;
   }
 
-  .aria-close-button {
-    top: -45px;
-    width: 36px;
-    height: 36px;
+  .aria-close {
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
   }
 }
