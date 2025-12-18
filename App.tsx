@@ -720,7 +720,7 @@ export default function App() {
 />
 
 <AriaVoiceOverlay
-  agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
+  agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || process.env.ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
   isOpen={isLiveOpen}
   onClose={() => setIsLiveOpen(false)}
 />
