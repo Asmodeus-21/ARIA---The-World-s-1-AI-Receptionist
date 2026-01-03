@@ -14,7 +14,11 @@ import AriaVoiceOverlay from './components/AriaVoiceOverlay';
 import LogoTicker from './components/LogoTicker';
 import TestimonialCarousel from './components/TestimonialCarousel';
 import Legal from './components/Legal';
+import SEOHead from './components/SEOHead';
+import AIReceptionistPage from './components/AIReceptionistPage';
+import AICallAnsweringPage from './components/AICallAnsweringPage';
 import { PricingPlan } from './types';
+import { HOME_META } from './seo.config';
 
 // Declare global process for Vite's define config
 declare const process: { env: Record<string, string | undefined> };
@@ -245,6 +249,7 @@ const Header = ({ onOpenForm, onOpenLive, onNavigateLegal }: { onOpenForm: () =>
   }, []);
 
   const navLinks = [
+    { name: "How It Works", href: "/ai-receptionist" },
     { name: "Features", href: "#features" },
     { name: "Pricing", href: "#pricing" },
     { name: "Testimonials", href: "#testimonials" },
@@ -252,6 +257,15 @@ const Header = ({ onOpenForm, onOpenLive, onNavigateLegal }: { onOpenForm: () =>
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
+    
+    // If it's a page link, navigate to it
+    if (href.startsWith('/')) {
+      window.location.href = href;
+      setMobileMenuOpen(false);
+      return;
+    }
+    
+    // If it's a hash link, scroll to it
     const targetId = href.replace('#', '');
     const element = document.getElementById(targetId);
     if (element) {
@@ -361,6 +375,49 @@ export default function App() {
     window.location.hash = '';
   };
 
+  // Page routing based on pathname
+  const pathname = window.location.pathname;
+  
+  // Show AI Receptionist page
+  if (pathname === '/ai-receptionist') {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 font-sans">
+        <Analytics />
+        <AIReceptionistPage openForm={() => openForm()} openLive={() => setIsLiveOpen(true)} />
+        <GetStartedModal 
+          isOpen={isFormOpen} 
+          onClose={() => setIsFormOpen(false)} 
+          openLiveDemo={() => setIsLiveOpen(true)}
+        />
+        <AriaVoiceOverlay
+          agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || process.env.ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
+          isOpen={isLiveOpen}
+          onClose={() => setIsLiveOpen(false)}
+        />
+      </div>
+    );
+  }
+
+  // Show AI Call Answering page
+  if (pathname === '/ai-call-answering') {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 font-sans">
+        <Analytics />
+        <AICallAnsweringPage openForm={() => openForm()} openLive={() => setIsLiveOpen(true)} />
+        <GetStartedModal 
+          isOpen={isFormOpen} 
+          onClose={() => setIsFormOpen(false)} 
+          openLiveDemo={() => setIsLiveOpen(true)}
+        />
+        <AriaVoiceOverlay
+          agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || process.env.ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
+          isOpen={isLiveOpen}
+          onClose={() => setIsLiveOpen(false)}
+        />
+      </div>
+    );
+  }
+
   // Show Legal page if on that route
   if (currentPage === 'legal') {
     return (
@@ -387,6 +444,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
       <Analytics />
+      <SEOHead metadata={HOME_META} />
       <Header onOpenForm={() => openForm()} onOpenLive={openLive} onNavigateLegal={navigateToLegal} />
 
       <main>
