@@ -1,50 +1,31 @@
 import React, { useState } from 'react';
-import { X, CheckCircle, ArrowRight, Loader2, Lock } from 'lucide-react';
+import { X, CheckCircle, Loader2 } from 'lucide-react';
 import Button from './Button';
 import { pushLeadToGoHighLevel } from '../services/ghlService';
-import { GHLPayload, PricingPlan } from '../types';
+import { GHLPayload } from '../types';
 
 interface GetStartedModalProps {
   isOpen: boolean;
   onClose: () => void;
   openLiveDemo: () => void;
-  selectedPlan?: PricingPlan | null;
 }
 
-const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, openLiveDemo, selectedPlan }) => {
+const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, openLiveDemo }) => {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Debug logging
-  React.useEffect(() => {
-    if (isOpen && selectedPlan) {
-      console.log('GetStartedModal opened with plan:', { 
-        name: selectedPlan.name, 
-        stripeLink: selectedPlan.stripeLink 
-      });
-    }
-  }, [isOpen, selectedPlan]);
   
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    businessType: '',
-    consentSMS: false,
-    consentTransactional: false,
   });
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,30 +36,26 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
       ...formData,
       sourcePage: window.location.pathname,
       timestamp: new Date().toISOString(),
-      tags: ['ARIA - Website Lead', selectedPlan ? `Plan: ${selectedPlan.name}` : 'General Inquiry'],
-      selectedPlan: selectedPlan?.name
+      tags: ['ARIA - Voice AI Lead'],
     };
 
     try {
       await pushLeadToGoHighLevel(payload);
       setStep('success');
+      // Auto-open voice AI after 2 seconds
+      setTimeout(() => {
+        openLiveDemo();
+        onClose();
+      }, 2000);
     } catch (error) {
       console.error('Submission error', error);
-      // Even if GHL fails, we might want to let them proceed to payment in a real scenario,
-      // but for now we'll just show success to not block the user.
       setStep('success');
+      setTimeout(() => {
+        openLiveDemo();
+        onClose();
+      }, 2000);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handlePaymentRedirect = () => {
-    if (selectedPlan?.stripeLink) {
-      window.location.href = selectedPlan.stripeLink;
-    } else {
-      // If no payment link (e.g. enterprise or general inquiry), just close or open demo
-      onClose();
-      openLiveDemo();
     }
   };
 
@@ -97,12 +74,10 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
         {step === 'form' ? (
           <div className="p-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-2">
-              {selectedPlan ? `Get Started with ${selectedPlan.name}` : 'Start your 7-Day Trial'}
+              Ready to Talk with ARIA?
             </h2>
             <p className="text-slate-600 mb-6">
-              {selectedPlan 
-                ? `Complete your details below to proceed to secure checkout for the ${selectedPlan.name} plan.` 
-                : 'Experience the power of ARIA for just $97.'}
+              Just share your contact info and start your conversation.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,23 +86,26 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
                   <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
                   <input 
                     required type="text" name="firstName" value={formData.firstName} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="John"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
                   <input 
                     required type="text" name="lastName" value={formData.lastName} onChange={handleChange}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                    placeholder="Doe"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email Work Address</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                 <input 
                   required type="email" name="email" value={formData.email} onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="john@company.com"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
               </div>
 
@@ -135,56 +113,25 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
                 <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
                 <input 
                   required type="tel" name="phone" value={formData.phone} onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="+1 (555) 123-4567"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Business Type</label>
-                <select 
-                  required name="businessType" value={formData.businessType} onChange={handleChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-                >
-                  <option value="">Select your industry...</option>
-                  <option value="Medical / Dental">Medical / Dental</option>
-                  <option value="Legal">Legal</option>
-                  <option value="Real Estate">Real Estate</option>
-                  <option value="Home Services">Home Services</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" required name="consentTransactional" checked={formData.consentTransactional} onChange={handleChange}
-                    className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-                  />
-                  <span className="text-xs text-slate-500">
-                    By checking this box, I consent to receive transactional messages from Aria ai related to my account, orders, or services I have requested. These messages may include appointment reminders, order confirmations, and account notifications among others. Message frequency may vary. Message & Data rates may apply. Reply HELP for help or STOP to opt-out.
+              <Button 
+                type="submit" 
+                fullWidth 
+                disabled={isSubmitting}
+                className="bg-blue-600 hover:bg-blue-700 text-white mt-6"
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 size={18} className="animate-spin" /> Processing...
                   </span>
-                </label>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" required name="consentSMS" checked={formData.consentSMS} onChange={handleChange}
-                    className="mt-1 w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-                  />
-                  <span className="text-xs text-slate-500">
-                    By checking this box, I consent to receive marketing and promotional messages from Aria Ai, including special offers, discounts, new product updates among others. Message frequency may vary. Message & Data rates may apply. Reply HELP for help or STOP to opt-out.
-                  </span>
-                </label>
-              </div>
-
-              <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  fullWidth 
-                  disabled={isSubmitting}
-                  className="bg-slate-900 text-white hover:bg-slate-800"
-                >
-                  {isSubmitting ? <Loader2 className="animate-spin" /> : (selectedPlan?.stripeLink ? 'Continue to Payment' : 'Start with ARIA')}
-                </Button>
-              </div>
+                ) : (
+                  'Start Conversation'
+                )}
+              </Button>
             </form>
           </div>
         ) : (
@@ -192,39 +139,14 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
               <CheckCircle className="text-green-600 w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">You're All Set!</h2>
-            <p className="text-slate-600 mb-8 max-w-xs mx-auto">
-              Your account details have been securely recorded. 
-              {selectedPlan?.stripeLink && ' Please proceed to complete your subscription.'}
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">All Set!</h2>
+            <p className="text-slate-600 mb-6">
+              Starting your conversation with ARIA now...
             </p>
-            <div className="space-y-3 w-full">
-              {selectedPlan?.stripeLink ? (
-                <Button 
-                  onClick={handlePaymentRedirect}
-                  variant="primary"
-                  fullWidth
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                >
-                  <Lock size={16} /> Proceed to Secure Checkout
-                </Button>
-              ) : (
-                <Button 
-                  onClick={() => { onClose(); openLiveDemo(); }}
-                  variant="secondary"
-                  fullWidth
-                  className="flex items-center gap-2"
-                >
-                  Speak with ARIA Now <ArrowRight size={16} />
-                </Button>
-              )}
-              
-              <Button 
-                onClick={onClose}
-                variant="ghost"
-                fullWidth
-              >
-                Close
-              </Button>
+            <div className="animate-pulse flex gap-2 justify-center">
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-100"></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-200"></div>
             </div>
           </div>
         )}

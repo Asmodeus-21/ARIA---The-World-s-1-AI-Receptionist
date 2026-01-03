@@ -13,6 +13,7 @@ import GetStartedModal from './components/GetStartedModal';
 import AriaVoiceOverlay from './components/AriaVoiceOverlay';
 import LogoTicker from './components/LogoTicker';
 import TestimonialCarousel from './components/TestimonialCarousel';
+import Legal from './components/Legal';
 import { PricingPlan } from './types';
 
 // Declare global process for Vite's define config
@@ -123,11 +124,11 @@ const getEnv = (key: string) => {
 
 const PRICING_PLANS: PricingPlan[] = [
   {
-    name: "7-Day Trial",
+    name: "14-Day Trial",
     price: "$97",
     period: "one-time setup",
     features: ["Full Platform Access", "Custom AI Agent Setup", "Live Call Handling", "CRM & Calendar Sync"],
-    cta: "Start 7-Day Trial",
+    cta: "Start 14-Day Trial",
     stripeLink: getEnv('STRIPE_TRIAL_LINK') || '', 
   },
   {
@@ -233,7 +234,7 @@ const CountUpStats: React.FC<{ stat: typeof IMPACT_STATS[0] }> = ({ stat }) => {
   );
 };
 
-const Header = ({ onOpenForm, onOpenLive }: { onOpenForm: () => void, onOpenLive: () => void }) => {
+const Header = ({ onOpenForm, onOpenLive, onNavigateLegal }: { onOpenForm: () => void, onOpenLive: () => void, onNavigateLegal?: (page: 'privacy' | 'terms' | 'contact') => void }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -284,7 +285,7 @@ const Header = ({ onOpenForm, onOpenLive }: { onOpenForm: () => void, onOpenLive
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <button onClick={onOpenLive} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+          <button onClick={() => onOpenForm()} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
             Talk with ARIA
           </button>
           <Button size="sm" onClick={onOpenForm}>Get Started</Button>
@@ -310,7 +311,7 @@ const Header = ({ onOpenForm, onOpenLive }: { onOpenForm: () => void, onOpenLive
             </a>
           ))}
           <hr className="border-slate-100" />
-          <Button variant="outline" fullWidth onClick={() => { setMobileMenuOpen(false); onOpenLive(); }}>Talk with ARIA</Button>
+          <Button variant="outline" fullWidth onClick={() => { setMobileMenuOpen(false); onOpenForm(); }}>Talk with ARIA</Button>
           <Button fullWidth onClick={() => { setMobileMenuOpen(false); onOpenForm(); }}>Get Started</Button>
         </div>
       )}
@@ -324,6 +325,26 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isLiveOpen, setIsLiveOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
+  const [currentPage, setCurrentPage] = useState<'home' | 'legal'>('home');
+  const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | 'contact' | 'home'>('home');
+
+  // Handle hash routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash.startsWith('legal')) {
+        setCurrentPage('legal');
+        const page = hash.split('/')[1] as 'privacy' | 'terms' | 'contact' | 'home';
+        setLegalPage(page || 'home');
+      } else {
+        setCurrentPage('home');
+      }
+    };
+
+    handleHashChange();
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   const openForm = (plan?: PricingPlan) => {
     setSelectedPlan(plan || null);
@@ -332,10 +353,41 @@ export default function App() {
   
   const openLive = () => setIsLiveOpen(true);
 
+  const navigateToLegal = (page: 'privacy' | 'terms' | 'contact' | 'home' = 'home') => {
+    window.location.hash = `legal${page !== 'home' ? '/' + page : ''}`;
+  };
+
+  const backToHome = () => {
+    window.location.hash = '';
+  };
+
+  // Show Legal page if on that route
+  if (currentPage === 'legal') {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 font-sans">
+        <Analytics />
+        <Legal 
+          initialPage={legalPage} 
+          onBack={backToHome}
+        />
+        {/* Footer for legal pages */}
+        <footer className="bg-slate-900 text-white py-12 border-t border-slate-800 mt-12">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+              <div>
+                <p className="text-slate-400 hover:text-white transition cursor-default">© {new Date().getFullYear()} ARIA AI Inc. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
       <Analytics />
-      <Header onOpenForm={() => openForm()} onOpenLive={openLive} />
+      <Header onOpenForm={() => openForm()} onOpenLive={openLive} onNavigateLegal={navigateToLegal} />
 
       <main>
         {/* HERO */}
@@ -361,8 +413,8 @@ export default function App() {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="w-full sm:w-auto h-14 px-8 text-lg">Start 7-Day Trial</Button>
-              <Button size="lg" variant="outline" onClick={openLive} className="w-full sm:w-auto h-14 px-8 text-lg flex items-center gap-3">
+              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="w-full sm:w-auto h-14 px-8 text-lg">Start 14-Day Trial</Button>
+              <Button size="lg" variant="outline" onClick={() => openForm()} className="w-full sm:w-auto h-14 px-8 text-lg flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 Watch ARIA in Action
               </Button>
@@ -651,8 +703,8 @@ export default function App() {
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-8 tracking-tight">Transform Your Business Today</h2>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="h-14 px-10 text-lg">Start 7-Day Trial</Button>
-              <Button size="lg" variant="secondary" onClick={openLive} className="h-14 px-10 text-lg flex items-center gap-2">
+              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="h-14 px-10 text-lg">Start 14-Day Trial</Button>
+              <Button size="lg" variant="secondary" onClick={() => openForm()} className="h-14 px-10 text-lg flex items-center gap-2">
                 <Phone size={20} /> Speak with ARIA
               </Button>
             </div>
@@ -683,9 +735,9 @@ export default function App() {
               <div>
                 <h4 className="font-semibold text-white mb-4 text-sm uppercase tracking-wide">Legal</h4>
                 <div className="flex flex-col gap-3 text-sm">
-                  <a href="#" className="text-slate-400 hover:text-white transition">Privacy Policy</a>
-                  <a href="#" className="text-slate-400 hover:text-white transition">Terms of Service</a>
-                  <a href="#" className="text-slate-400 hover:text-white transition">Contact</a>
+                  <a onClick={() => onNavigateLegal?.('privacy')} href="#legal/privacy" className="text-slate-400 hover:text-white transition cursor-pointer">Privacy Policy</a>
+                  <a onClick={() => onNavigateLegal?.('terms')} href="#legal/terms" className="text-slate-400 hover:text-white transition cursor-pointer">Terms of Service</a>
+                  <a onClick={() => onNavigateLegal?.('contact')} href="#legal/contact" className="text-slate-400 hover:text-white transition cursor-pointer">Contact</a>
                 </div>
               </div>
 
@@ -707,7 +759,7 @@ export default function App() {
 
         {/* Mobile Sticky CTA */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 z-30 safe-bottom">
-           <Button fullWidth onClick={() => openForm(PRICING_PLANS[0])}>Start 7-Day Trial</Button>
+           <Button fullWidth onClick={() => openForm(PRICING_PLANS[0])}>Start 14-Day Trial</Button>
         </div>
 
       </main>

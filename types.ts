@@ -29,11 +29,7 @@ export interface GHLPayload {
   lastName: string;
   email: string;
   phone: string;
-  businessType: string;
   sourcePage: string;
   timestamp: string;
-  consentEmail: boolean;
-  consentSMS: boolean;
   tags: string[];
-  selectedPlan?: string;
 }

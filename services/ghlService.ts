@@ -6,8 +6,7 @@ declare const process: { env: Record<string, string | undefined> };
 /* 
   🟢 GHL MAPPING REFERENCE 
   -------------------------------------------------------
-  When setting up your "Inbound Webhook" trigger in GoHighLevel, 
-  use these keys to map data to your Contact fields:
+  Map these to your Contact fields in GoHighLevel:
 
   STANDARD FIELDS:
   • First Name    -> {{webhook.firstName}}
@@ -15,18 +14,9 @@ declare const process: { env: Record<string, string | undefined> };
   • Email         -> {{webhook.email}}
   • Phone         -> {{webhook.phone}}
   
-  CUSTOM FIELDS (Create these in GHL Settings -> Custom Fields):
-  • Business Type -> {{webhook.businessType}}
-  • Plan Name     -> {{webhook.selectedPlan}}
-  • Source Page   -> {{webhook.sourcePage}}
-  
   TAGS:
   • Tags (Array)  -> {{webhook.tags}}
-  • Tags (String) -> {{webhook.tags_str}}  <-- Use this if mapping to a text field
-  
-  CONSENT (Checkbox/Boolean):
-  • Email Consent -> {{webhook.consentEmail}}
-  • SMS Consent   -> {{webhook.consentSMS}}
+  • Tags (String) -> {{webhook.tags_str}}
   -------------------------------------------------------
 */
 
@@ -52,16 +42,16 @@ export const pushLeadToGoHighLevel = async (data: GHLPayload): Promise<boolean> 
     process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL ||
     '';
 
-  // 2. Log for Debugging (Helps you test in GHL)
+  // 2. Log for Debugging
   console.group('🔌 GoHighLevel Integration');
-  console.log('Target URL:', webhookUrl ? webhookUrl : '(No URL configured - Simulation Mode)');
-  console.log('Payload to Map:', JSON.stringify(payload, null, 2));
+  console.log('Lead:', `${data.firstName} ${data.lastName}`);
+  console.log('Email:', data.email);
+  console.log('Phone:', data.phone);
   console.groupEnd();
 
   // 3. Simulation Mode (if no URL)
   if (!webhookUrl) {
-    console.warn("⚠️ GHL Webhook URL missing. Data was logged to console but not sent.");
-    // Simulate network delay
+    console.warn("⚠️ GHL Webhook URL missing. Data logged but not sent.");
     await new Promise((resolve) => setTimeout(resolve, 800));
     return true;
   }
@@ -89,6 +79,3 @@ export const pushLeadToGoHighLevel = async (data: GHLPayload): Promise<boolean> 
   }
 };
 
-export const logCallIntent = async (intent: string, duration: number): Promise<void> => {
-  console.log(`🎙️ Logged Call Intent to GHL: ${intent} (${duration}s)`);
-};
