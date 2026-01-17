@@ -72,7 +72,7 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
           <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white font-serif font-bold text-xl shadow-lg shadow-slate-900/10">
             A
           </div>
-          <span className="font-semibold text-lg tracking-tight text-slate-900">ARIA</span>
+          <span className="font-semibold text-lg tracking-tight text-slate-900">OpenAria</span>
         </div>
 
         {/* Desktop Navigation */}

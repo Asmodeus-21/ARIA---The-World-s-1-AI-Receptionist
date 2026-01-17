@@ -16,7 +16,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigateLegal }) => {
               <div className="w-8 h-8 rounded bg-blue-500 flex items-center justify-center font-serif font-bold text-sm">
                 A
               </div>
-              <span className="font-bold text-lg">ARIA</span>
+              <span className="font-bold text-lg">OpenAria</span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed">
               The world's #1 AI Receptionist transforming customer interactions.
@@ -115,7 +115,7 @@ const Footer: React.FC<FooterProps> = ({ onNavigateLegal }) => {
 
         {/* Divider */}
         <div className="border-t border-slate-800 pt-8 text-center text-sm text-slate-500">
-          <p>© {new Date().getFullYear()} ARIA AI Inc. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} OpenAria AI Inc. All rights reserved.</p>
         </div>
       </div>
     </footer>

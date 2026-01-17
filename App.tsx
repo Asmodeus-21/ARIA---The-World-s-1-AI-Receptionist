@@ -69,7 +69,7 @@ const FEATURES_FULL = [
 const INTELLIGENCE_POINTS = [
   { title: "Gemini 3.0 Native", desc: "The world's most capable multimodal model. Processes audio, text, and intent simultaneously without transcoding.", icon: Cpu, color: "text-blue-400" },
   { title: "Sub-100ms Latency", desc: "Conversational speed faster than human reflexes. No awkward pauses. No robot lag.", icon: Zap, color: "text-yellow-400" },
-  { title: "Infinite Context", desc: "ARIA remembers every detail of every conversation. Past interactions shape future responses.", icon: Database, color: "text-purple-400" },
+  { title: "Infinite Context", desc: "OpenAria remembers every detail of every conversation. Past interactions shape future responses.", icon: Database, color: "text-purple-400" },
   { title: "Emotional Nuance", desc: "Detects frustration, urgency, and hesitation. Adjusts tone and empathy levels in real-time.", icon: Sparkles, color: "text-pink-400" },
   { title: "Global Fluency", desc: "Native-level proficiency in 50+ languages with automatic dialect and accent detection.", icon: Globe, color: "text-emerald-400" },
   { title: "Autonomous Action", desc: "Doesn't just talk. Executes complex CRM workflows, bookings, and payments autonomously.", icon: Activity, color: "text-red-400" },
@@ -84,7 +84,7 @@ const IMPACT_STATS = [
     label: "Lead Response Time", 
     prefix: "<", 
     suffix: "s", 
-    desc: "Instant engagement. ARIA picks up immediately, preventing leads from drifting to competitors.",
+    desc: "Instant engagement. OpenAria picks up immediately, preventing leads from drifting to competitors.",
     icon: Zap,
     theme: "blue",
     numeric: 1,
@@ -94,7 +94,7 @@ const IMPACT_STATS = [
     label: "Booking Conversion", 
     prefix: "+", 
     suffix: "%", 
-    desc: "Turn inquiries into revenue. ARIA qualifies and books appointments 24/7 while you sleep.",
+    desc: "Turn inquiries into revenue. OpenAria qualifies and books appointments 24/7 while you sleep.",
     icon: Calendar,
     theme: "emerald",
     numeric: 300,
@@ -285,7 +285,7 @@ const Header = ({ onOpenForm, onOpenLive, onNavigateLegal }: { onOpenForm: () =>
           <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white font-serif font-bold text-xl shadow-lg shadow-slate-900/10">
             A
           </div>
-          <span className="font-semibold text-lg tracking-tight text-slate-900">ARIA</span>
+          <span className="font-semibold text-lg tracking-tight text-slate-900">OpenAria</span>
         </div>
 
         {/* Desktop Nav */}
@@ -304,7 +304,7 @@ const Header = ({ onOpenForm, onOpenLive, onNavigateLegal }: { onOpenForm: () =>
 
         <div className="hidden md:flex items-center gap-4">
           <button onClick={() => onOpenForm()} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
-            Talk with ARIA
+            Talk with OpenAria
           </button>
           <Button size="sm" onClick={onOpenForm}>Get Started</Button>
         </div>
@@ -329,7 +329,7 @@ const Header = ({ onOpenForm, onOpenLive, onNavigateLegal }: { onOpenForm: () =>
             </a>
           ))}
           <hr className="border-slate-100" />
-          <Button variant="outline" fullWidth onClick={() => { setMobileMenuOpen(false); onOpenForm(); }}>Talk with ARIA</Button>
+          <Button variant="outline" fullWidth onClick={() => { setMobileMenuOpen(false); onOpenForm(); }}>Talk with OpenAria</Button>
           <Button fullWidth onClick={() => { setMobileMenuOpen(false); onOpenForm(); }}>Get Started</Button>
         </div>
       )}
@@ -436,7 +436,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
               <div>
-                <p className="text-slate-400 hover:text-white transition cursor-default">© {new Date().getFullYear()} ARIA AI Inc. All rights reserved.</p>
+                <p className="text-slate-400 hover:text-white transition cursor-default">© {new Date().getFullYear()} OpenAria AI Inc. All rights reserved.</p>
               </div>
             </div>
           </div>
@@ -481,7 +481,7 @@ export default function App() {
             </div>
             
             <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-slate-900 mb-8 leading-[1]">
-              ARIA – The World’s #1 <br />
+              OpenAria – The World's #1 <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-sky-400 to-blue-700 bg-[length:200%_auto] animate-shimmer pb-2">
                 AI Receptionist
               </span>
@@ -489,14 +489,14 @@ export default function App() {
             
             <p className="text-xl md:text-2xl text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
               Professional. Reliable. Limitless. <br className="hidden md:block"/>
-              ARIA handles every customer interaction so your business runs nonstop.
+              OpenAria handles every customer interaction so your business runs nonstop.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="w-full sm:w-auto h-14 px-8 text-lg">Start 14-Day Trial</Button>
               <Button size="lg" variant="outline" onClick={() => openForm()} className="w-full sm:w-auto h-14 px-8 text-lg flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                Watch ARIA in Action
+                Watch OpenAria in Action
               </Button>
             </div>
 
@@ -516,7 +516,7 @@ export default function App() {
         <section className="py-16 border-y border-slate-100 bg-slate-50/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-center text-sm font-semibold text-slate-400 mb-10 tracking-widest uppercase">
-              Trusted by Innovative Teams Using ARIA AI
+              Trusted by Innovative Teams Using OpenAria AI
             </p>
             <LogoTicker />
           </div>
@@ -530,7 +530,7 @@ export default function App() {
                 The Full Spectrum of Reception Duties. Perfected.
               </h2>
               <p className="text-slate-500 max-w-2xl mx-auto text-lg">
-                From complex scheduling to empathetic conversations, ARIA handles your entire front office with zero friction.
+                From complex scheduling to empathetic conversations, OpenAria handles your entire front office with zero friction.
               </p>
             </div>
 
