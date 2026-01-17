@@ -4,10 +4,6 @@
   "outputDirectory": ".next",
   "rewrites": [
     {
-      "source": "/solutions/:industry*",
-      "destination": "/.next/server/pages/solutions/:industry*"
-    },
-    {
       "source": "/:path*",
       "destination": "/static/:path*"
     },
