@@ -11,16 +11,6 @@
       "destination": "/.next/server/pages/solutions/:industry*"
     }
   ],
-  "routes": [
-    {
-      "src": "^/solutions(/.*)?$",
-      "continue": true
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/.vercel/output/static/index.html"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
