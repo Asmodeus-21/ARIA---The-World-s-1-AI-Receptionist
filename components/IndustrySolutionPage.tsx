@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'next/navigation';
 import { Helmet } from 'react-helmet-async';
 import { ChevronRight, CheckCircle2, Target, TrendingUp, Clock, Zap } from 'lucide-react';
 import Button from './Button';
@@ -12,8 +12,8 @@ interface IndustrySolutionPageProps {
 }
 
 const IndustrySolutionPage: React.FC<IndustrySolutionPageProps> = ({ industry: propIndustry }) => {
-  const params = useParams<{ industry: string }>();
-  const industrySlug = params.industry || '';
+  const params = useParams();
+  const industrySlug = (params?.industry as string) || '';
 
   // Get industry data from slug or from props (for SSR scenarios)
   const industry = useMemo(() => {
