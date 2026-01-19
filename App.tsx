@@ -346,6 +346,10 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<'home' | 'legal'>('home');
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | 'contact' | 'home'>('home');
   const [pathname, setPathname] = useState('');
+  const elevenLabsAgentId =
+    process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID ||
+    process.env.ELEVENLABS_AGENT_ID ||
+    'agent_4501kckg7737f2dtvd8589hzj5b7';
 
   // Handle hash routing
   useEffect(() => {
@@ -400,7 +404,7 @@ export default function App() {
           openLiveDemo={() => setIsLiveOpen(true)}
         />
         <AriaVoiceOverlay
-          agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || process.env.ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
+          agentId={elevenLabsAgentId}
           isOpen={isLiveOpen}
           onClose={() => setIsLiveOpen(false)}
         />
@@ -420,7 +424,7 @@ export default function App() {
           openLiveDemo={() => setIsLiveOpen(true)}
         />
         <AriaVoiceOverlay
-          agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || process.env.ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
+          agentId={elevenLabsAgentId}
           isOpen={isLiveOpen}
           onClose={() => setIsLiveOpen(false)}
         />
@@ -827,7 +831,7 @@ export default function App() {
 />
 
 <AriaVoiceOverlay
-  agentId={import.meta.env.VITE_ELEVENLABS_AGENT_ID || process.env.ELEVENLABS_AGENT_ID || 'agent_4501kckg7737f2dtvd8589hzj5b7'}
+  agentId={elevenLabsAgentId}
   isOpen={isLiveOpen}
   onClose={() => setIsLiveOpen(false)}
 />
