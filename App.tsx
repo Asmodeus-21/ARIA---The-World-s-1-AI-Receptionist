@@ -345,6 +345,7 @@ export default function App() {
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [currentPage, setCurrentPage] = useState<'home' | 'legal'>('home');
   const [legalPage, setLegalPage] = useState<'privacy' | 'terms' | 'contact' | 'home'>('home');
+  const [pathname, setPathname] = useState('');
 
   // Handle hash routing
   useEffect(() => {
@@ -364,6 +365,12 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPathname(window.location.pathname);
+    }
+  }, []);
+
   const openForm = (plan?: PricingPlan) => {
     setSelectedPlan(plan || null);
     setIsFormOpen(true);
@@ -380,7 +387,6 @@ export default function App() {
   };
 
   // Page routing based on pathname
-  const pathname = window.location.pathname;
   
   // Show AI Receptionist page
   if (pathname === '/ai-receptionist') {
