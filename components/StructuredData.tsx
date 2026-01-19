@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 
 /**
  * OpenAria Structured Data Component
@@ -133,7 +132,7 @@ export const StructuredDataComponent: React.FC<StructuredDataProps> = ({ pricing
     name: 'OpenAria',
     description: 'AI Receptionist Service',
     url: 'https://openaria.app',
-    telephone: '+1-800-OPENARIA', // Replace with actual support number
+    telephone: '+1-800-OPENARIA',
     email: 'support@openaria.app',
     image: 'https://openaria.app/logo.png',
     sameAs: [
@@ -191,47 +190,54 @@ export const StructuredDataComponent: React.FC<StructuredDataProps> = ({ pricing
     })
   };
 
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    url: 'https://openaria.app',
+    name: 'OpenAria',
+    description: 'AI Receptionist for Businesses',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: 'https://openaria.app/search?q={search_term_string}'
+      },
+      'query-input': 'required name=search_term_string'
+    }
+  };
+
   return (
-    <Helmet>
+    <>
       {/* Organization Schema */}
-      <script type="application/ld+json">
-        {JSON.stringify(organizationSchema)}
-      </script>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
 
       {/* SoftwareApplication Schema - PRIMARY for Knowledge Graph */}
-      <script type="application/ld+json">
-        {JSON.stringify(softwareApplicationSchema)}
-      </script>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
+      />
 
       {/* LocalBusiness Schema */}
-      <script type="application/ld+json">
-        {JSON.stringify(localBusinessSchema)}
-      </script>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
+      />
 
       {/* Product Schema */}
-      <script type="application/ld+json">
-        {JSON.stringify(productSchema)}
-      </script>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
 
       {/* WebSite Schema - For sitelinks search box */}
-      <script type="application/ld+json">
-        {JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          url: 'https://openaria.app',
-          name: 'OpenAria',
-          description: 'AI Receptionist for Businesses',
-          potentialAction: {
-            '@type': 'SearchAction',
-            target: {
-              '@type': 'EntryPoint',
-              urlTemplate: 'https://openaria.app/search?q={search_term_string}'
-            },
-            'query-input': 'required name=search_term_string'
-          }
-        })}
-      </script>
-    </Helmet>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+    </>
   );
 };
 

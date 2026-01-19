@@ -9,7 +9,7 @@ interface NavbarProps {
   onNavigateLegal?: (page: 'privacy' | 'terms' | 'contact') => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal }) => {
+const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive: _onOpenLive, onNavigateLegal: _onNavigateLegal }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [solutionsDropdownOpen, setSolutionsDropdownOpen] = useState(false);
@@ -59,9 +59,8 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         {/* Logo */}
@@ -103,11 +102,10 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
 
             {/* Dropdown Menu */}
             <div
-              className={`absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden transition-all duration-200 origin-top-left ${
-                solutionsDropdownOpen
-                  ? 'opacity-100 visible scale-100'
-                  : 'opacity-0 invisible scale-95 pointer-events-none'
-              }`}
+              className={`absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden transition-all duration-200 origin-top-left ${solutionsDropdownOpen
+                ? 'opacity-100 visible scale-100'
+                : 'opacity-0 invisible scale-95 pointer-events-none'
+                }`}
             >
               <div className="py-2">
                 {/* Top 5 Industries */}

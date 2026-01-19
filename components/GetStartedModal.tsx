@@ -11,10 +11,10 @@ interface GetStartedModalProps {
   selectedPlan?: PricingPlan | null;
 }
 
-const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, openLiveDemo, selectedPlan }) => {
+const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, openLiveDemo, selectedPlan: _selectedPlan }) => {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -63,9 +63,9 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden transition-all">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10"
         >
@@ -85,7 +85,7 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
-                  <input 
+                  <input
                     required type="text" name="firstName" value={formData.firstName} onChange={handleChange}
                     placeholder="John"
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
@@ -93,7 +93,7 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
-                  <input 
+                  <input
                     required type="text" name="lastName" value={formData.lastName} onChange={handleChange}
                     placeholder="Doe"
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
@@ -103,7 +103,7 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                <input 
+                <input
                   required type="email" name="email" value={formData.email} onChange={handleChange}
                   placeholder="john@company.com"
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
@@ -112,16 +112,16 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                <input 
+                <input
                   required type="tel" name="phone" value={formData.phone} onChange={handleChange}
                   placeholder="+1 (555) 123-4567"
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                fullWidth 
+              <Button
+                type="submit"
+                fullWidth
                 disabled={isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700 text-white mt-6"
               >

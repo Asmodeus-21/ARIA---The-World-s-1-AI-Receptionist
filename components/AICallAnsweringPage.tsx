@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Zap, Users, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Zap, Users, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import Button from './Button';
 import SEOHead from './SEOHead';
 import { AI_CALL_ANSWERING_META } from '../seo.config';
@@ -8,7 +8,7 @@ const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void
   return (
     <>
       <SEOHead metadata={AI_CALL_ANSWERING_META} />
-      
+
       <div className="bg-white">
         {/* Hero */}
         <section className="pt-24 pb-16 px-4 bg-gradient-to-b from-slate-50 to-white">
@@ -231,16 +231,16 @@ const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void
               Get ARIA set up in minutes. See real results in your first week. Risk-free 14-day trial.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Button 
-                size="lg" 
-                onClick={() => openForm()} 
+              <Button
+                size="lg"
+                onClick={() => openForm()}
                 className="bg-white text-blue-600 hover:bg-slate-100"
               >
                 Start Free Trial
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
+              <Button
+                size="lg"
+                variant="outline"
                 onClick={() => openLive()}
                 className="border-white text-white hover:bg-blue-700"
               >
