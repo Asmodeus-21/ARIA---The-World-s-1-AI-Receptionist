@@ -62,6 +62,13 @@ export default function RootLayout({
             alt=""
           />
         </noscript>
+
+        {/* ElevenLabs ConvAI Widget Script */}
+        <Script
+          src="https://unpkg.com/@elevenlabs/convai-widget-embed"
+          strategy="lazyOnload"
+          async
+        />
       </head>
       <body className="bg-slate-950 text-white font-sans">
         {children}

@@ -26,7 +26,8 @@ interface StripeEvent {
 export async function POST(req: NextRequest) {
     try {
         const body = await req.text();
-        const signature = headers().get('stripe-signature');
+        const headersList = await headers();
+        const signature = headersList.get('stripe-signature');
 
         if (!signature) {
             return NextResponse.json(
@@ -62,7 +63,6 @@ export async function POST(req: NextRequest) {
 
             // Extract customer data
             const customerEmail = session.customer_details?.email || session.customer_email;
-            const customerName = session.customer_details?.name;
             const amountTotal = session.amount_total / 100; // Convert from cents
             const currency = session.currency?.toUpperCase() || 'USD';
 

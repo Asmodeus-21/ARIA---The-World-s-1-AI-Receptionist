@@ -11,7 +11,7 @@ interface GetStartedModalProps {
   selectedPlan?: PricingPlan | null;
 }
 
-const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, openLiveDemo, selectedPlan: _selectedPlan }) => {
+const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, openLiveDemo, selectedPlan }) => {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,18 +43,36 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
     try {
       await pushLeadToGoHighLevel(payload);
       setStep('success');
-      // Auto-open voice AI after 2 seconds
-      setTimeout(() => {
-        openLiveDemo();
-        onClose();
-      }, 2000);
+
+      // If it's the trial plan, redirect to Stripe payment page
+      if (selectedPlan && selectedPlan.name === '14-Day Trial' && selectedPlan.stripeLink) {
+        const stripeUrl = selectedPlan.stripeLink;
+        setTimeout(() => {
+          window.location.href = stripeUrl;
+        }, 1500);
+      } else {
+        // For other plans or demo requests, open voice AI
+        setTimeout(() => {
+          openLiveDemo();
+          onClose();
+        }, 2000);
+      }
     } catch (error) {
       console.error('Submission error', error);
       setStep('success');
-      setTimeout(() => {
-        openLiveDemo();
-        onClose();
-      }, 2000);
+
+      // Same logic for error case
+      if (selectedPlan && selectedPlan.name === '14-Day Trial' && selectedPlan.stripeLink) {
+        const stripeUrl = selectedPlan.stripeLink;
+        setTimeout(() => {
+          window.location.href = stripeUrl;
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          openLiveDemo();
+          onClose();
+        }, 2000);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -142,7 +160,9 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">All Set!</h2>
             <p className="text-slate-600 mb-6">
-              Starting your conversation with ARIA now...
+              {selectedPlan && selectedPlan.name === '14-Day Trial'
+                ? 'Redirecting you to secure payment...'
+                : 'Starting your conversation with ARIA now...'}
             </p>
             <div className="animate-pulse flex gap-2 justify-center">
               <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
