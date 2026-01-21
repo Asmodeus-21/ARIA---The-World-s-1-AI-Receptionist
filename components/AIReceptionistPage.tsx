@@ -3,12 +3,13 @@ import { CheckCircle, Phone, Calendar, Zap, BarChart3, Lock, Globe, Clock } from
 import Button from './Button';
 import SEOHead from './SEOHead';
 import { AI_RECEPTIONIST_META } from '../seo.config';
+import { trackLeadEvent, trackInitiateCheckout } from '../utils/facebookPixel';
 
 const AIReceptionistPage: React.FC<{ openForm: () => void; openLive: () => void }> = ({ openForm, openLive }) => {
   return (
     <>
       <SEOHead metadata={AI_RECEPTIONIST_META} />
-      
+
       <div className="bg-white">
         {/* Hero */}
         <section className="pt-24 pb-16 px-4 bg-gradient-to-b from-slate-50 to-white">
@@ -20,8 +21,25 @@ const AIReceptionistPage: React.FC<{ openForm: () => void; openLive: () => void 
               Stop missing calls. ARIA answers every customer call 24/7, qualifies leads, books appointments, and sends data straight to your CRM—automatically.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Button size="lg" onClick={() => openForm()}>Start 14-Day Trial</Button>
-              <Button size="lg" variant="outline" onClick={() => openLive()}>See Demo</Button>
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackInitiateCheckout('14-Day Trial - AI Receptionist', 97);
+                  openForm();
+                }}
+              >
+                Start 14-Day Trial
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  trackLeadEvent('AI Receptionist - See Demo');
+                  openLive();
+                }}
+              >
+                See Demo
+              </Button>
             </div>
           </div>
         </section>
@@ -239,17 +257,23 @@ const AIReceptionistPage: React.FC<{ openForm: () => void; openLive: () => void 
               Try ARIA free for 14 days. No credit card required. See exactly how much revenue you're leaving on the table.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Button 
-                size="lg" 
-                onClick={() => openForm()} 
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackInitiateCheckout('Free Trial - AI Receptionist Footer', 97);
+                  openForm();
+                }}
                 className="bg-white text-blue-600 hover:bg-slate-100"
               >
                 Start Free Trial
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                onClick={() => openLive()}
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  trackLeadEvent('AI Receptionist - Schedule Demo');
+                  openLive();
+                }}
                 className="border-white text-white hover:bg-blue-700"
               >
                 Schedule Demo

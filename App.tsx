@@ -21,6 +21,7 @@ import AIReceptionistPage from './components/AIReceptionistPage';
 import AICallAnsweringPage from './components/AICallAnsweringPage';
 import { PricingPlan } from './types';
 import { HOME_META } from './seo.config';
+import { trackLeadEvent, trackInitiateCheckout } from './utils/facebookPixel';
 
 // Dynamic imports for heavy components
 const GetStartedModal = dynamic(() => import('./components/GetStartedModal'), {
@@ -408,8 +409,25 @@ export default function App() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="w-full sm:w-auto h-14 px-8 text-lg">Start 14-Day Trial</Button>
-              <Button size="lg" variant="outline" onClick={() => openForm()} className="w-full sm:w-auto h-14 px-8 text-lg flex items-center gap-3">
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackInitiateCheckout('14-Day Trial', 97);
+                  openForm(PRICING_PLANS[0]);
+                }}
+                className="w-full sm:w-auto h-14 px-8 text-lg"
+              >
+                Start 14-Day Trial
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  trackLeadEvent('Hero - Watch Demo');
+                  openForm();
+                }}
+                className="w-full sm:w-auto h-14 px-8 text-lg flex items-center gap-3"
+              >
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 Watch OpenAria in Action
               </Button>
@@ -685,7 +703,11 @@ export default function App() {
                     <Button
                       fullWidth
                       variant={plan.isPopular ? 'white' : 'outline'}
-                      onClick={() => openForm(plan)}
+                      onClick={() => {
+                        const planValue = plan.price === 'Custom' ? 0 : parseFloat(plan.price.replace(/[^0-9.-]+/g, ''));
+                        trackInitiateCheckout(plan.name, planValue);
+                        openForm(plan);
+                      }}
                       className={!plan.isPopular ? 'group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900' : ''}
                     >
                       {plan.cta}
@@ -719,8 +741,25 @@ export default function App() {
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-8 tracking-tight">Transform Your Business Today</h2>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="h-14 px-10 text-lg">Start 14-Day Trial</Button>
-              <Button size="lg" variant="secondary" onClick={() => openForm()} className="h-14 px-10 text-lg flex items-center gap-2">
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackInitiateCheckout('14-Day Trial - Footer CTA', 97);
+                  openForm(PRICING_PLANS[0]);
+                }}
+                className="h-14 px-10 text-lg"
+              >
+                Start 14-Day Trial
+              </Button>
+              <Button
+                size="lg"
+                variant="secondary"
+                onClick={() => {
+                  trackLeadEvent('Footer CTA - Speak with ARIA');
+                  openForm();
+                }}
+                className="h-14 px-10 text-lg flex items-center gap-2"
+              >
                 <Phone size={20} /> Speak with ARIA
               </Button>
             </div>
@@ -732,7 +771,15 @@ export default function App() {
 
         {/* Mobile Sticky CTA */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 z-30 safe-bottom">
-          <Button fullWidth onClick={() => openForm(PRICING_PLANS[0])}>Start 14-Day Trial</Button>
+          <Button
+            fullWidth
+            onClick={() => {
+              trackInitiateCheckout('14-Day Trial - Mobile Sticky', 97);
+              openForm(PRICING_PLANS[0]);
+            }}
+          >
+            Start 14-Day Trial
+          </Button>
         </div>
 
       </main>

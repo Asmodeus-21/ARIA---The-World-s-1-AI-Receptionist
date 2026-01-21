@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import Button from './Button';
 import { INDUSTRIES_DATA } from '../data/industriesSemanticData';
+import { trackLeadEvent } from '../utils/facebookPixel';
 
 interface NavbarProps {
   onOpenForm: () => void;
@@ -148,12 +149,21 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive: _onOpenLive, on
         {/* Desktop CTA Buttons */}
         <div className="hidden md:flex items-center gap-4">
           <button
-            onClick={() => onOpenForm()}
+            onClick={() => {
+              trackLeadEvent('Navbar - Talk with ARIA');
+              onOpenForm();
+            }}
             className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
           >
             Talk with ARIA
           </button>
-          <Button size="sm" onClick={() => onOpenForm()}>
+          <Button
+            size="sm"
+            onClick={() => {
+              trackLeadEvent('Navbar - Get Started');
+              onOpenForm();
+            }}
+          >
             Get Started
           </Button>
         </div>
@@ -232,6 +242,7 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive: _onOpenLive, on
             variant="outline"
             fullWidth
             onClick={() => {
+              trackLeadEvent('Mobile Menu - Talk with ARIA');
               setMobileMenuOpen(false);
               onOpenForm();
             }}
@@ -241,6 +252,7 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive: _onOpenLive, on
           <Button
             fullWidth
             onClick={() => {
+              trackLeadEvent('Mobile Menu - Get Started');
               setMobileMenuOpen(false);
               onOpenForm();
             }}

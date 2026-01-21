@@ -3,6 +3,7 @@ import { Zap, Users, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import Button from './Button';
 import SEOHead from './SEOHead';
 import { AI_CALL_ANSWERING_META } from '../seo.config';
+import { trackLeadEvent, trackInitiateCheckout } from '../utils/facebookPixel';
 
 const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void }> = ({ openForm, openLive }) => {
   return (
@@ -20,8 +21,25 @@ const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void
               ARIA answers 100% of your calls 24/7, even on weekends and holidays. Capture every lead, qualify customers, and grow your business without hiring.
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Button size="lg" onClick={() => openForm()}>Start 14-Day Trial</Button>
-              <Button size="lg" variant="outline" onClick={() => openLive()}>Watch Demo</Button>
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackInitiateCheckout('14-Day Trial - AI Call Answering', 97);
+                  openForm();
+                }}
+              >
+                Start 14-Day Trial
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  trackLeadEvent('AI Call Answering - Watch Demo');
+                  openLive();
+                }}
+              >
+                Watch Demo
+              </Button>
             </div>
           </div>
         </section>
@@ -233,7 +251,10 @@ const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void
             <div className="flex gap-4 justify-center flex-wrap">
               <Button
                 size="lg"
-                onClick={() => openForm()}
+                onClick={() => {
+                  trackInitiateCheckout('Free Trial - AI Call Answering Footer', 97);
+                  openForm();
+                }}
                 className="bg-white text-blue-600 hover:bg-slate-100"
               >
                 Start Free Trial
@@ -241,7 +262,10 @@ const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => openLive()}
+                onClick={() => {
+                  trackLeadEvent('AI Call Answering - Talk to ARIA');
+                  openLive();
+                }}
                 className="border-white text-white hover:bg-blue-700"
               >
                 Talk to ARIA
