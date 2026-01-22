@@ -35,7 +35,7 @@ const AIReceptionistPage: React.FC<{ openForm: () => void; openLive: () => void 
                 variant="outline"
                 onClick={() => {
                   trackLeadEvent('AI Receptionist - See Demo');
-                  openLive();
+                  openForm();
                 }}
               >
                 See Demo
@@ -272,7 +272,7 @@ const AIReceptionistPage: React.FC<{ openForm: () => void; openLive: () => void 
                 variant="outline"
                 onClick={() => {
                   trackLeadEvent('AI Receptionist - Schedule Demo');
-                  openLive();
+                  openForm();
                 }}
                 className="border-white text-white hover:bg-blue-700"
               >

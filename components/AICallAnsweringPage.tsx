@@ -35,7 +35,7 @@ const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void
                 variant="outline"
                 onClick={() => {
                   trackLeadEvent('AI Call Answering - Watch Demo');
-                  openLive();
+                  openForm();
                 }}
               >
                 Watch Demo
@@ -264,7 +264,7 @@ const AICallAnsweringPage: React.FC<{ openForm: () => void; openLive: () => void
                 variant="outline"
                 onClick={() => {
                   trackLeadEvent('AI Call Answering - Talk to ARIA');
-                  openLive();
+                  openForm();
                 }}
                 className="border-white text-white hover:bg-blue-700"
               >
