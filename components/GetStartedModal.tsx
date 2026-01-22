@@ -14,7 +14,7 @@ interface GetStartedModalProps {
 const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, openLiveDemo, selectedPlan }) => {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -24,6 +24,8 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
 
   // Check if this is a payment flow (has Stripe link)
   const hasStripeLink = selectedPlan?.stripeLink && selectedPlan.stripeLink.length > 0;
+  // Check if this is Enterprise plan (has plan but no Stripe link)
+  const isEnterprisePlan = selectedPlan && !selectedPlan.stripeLink;
 
   if (!isOpen) return null;
 
@@ -42,33 +44,50 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
       timestamp: new Date().toISOString(),
       tags: hasStripeLink 
         ? ['ARIA - Payment Lead', `Plan: ${selectedPlan?.name}`] 
-        : ['ARIA - Voice AI Lead'],
+        : isEnterprisePlan
+          ? ['ARIA - Enterprise Lead', 'Plan: Enterprise']
+          : ['ARIA - Voice AI Lead'],
     };
 
     try {
       await pushLeadToGoHighLevel(payload);
       setStep('success');
-      
-      // Redirect to Stripe if payment flow, otherwise open voice demo
-      setTimeout(() => {
-        if (hasStripeLink) {
-          window.location.href = selectedPlan!.stripeLink;
-        } else {
+
+      // If a plan is selected and has a Stripe link, redirect to payment page
+      if (selectedPlan && selectedPlan.stripeLink) {
+        const stripeUrl = selectedPlan.stripeLink;
+        setTimeout(() => {
+          window.location.href = stripeUrl;
+        }, 1500);
+      } else if (selectedPlan && !selectedPlan.stripeLink) {
+        // For Enterprise plan (has plan but no Stripe link), just show thank you
+        // Do nothing - stay on success screen
+      } else {
+        // For demo requests without a plan, open voice AI
+        setTimeout(() => {
           openLiveDemo();
           onClose();
-        }
-      }, 2000);
+        }, 2000);
+      }
     } catch (error) {
       console.error('Submission error', error);
       setStep('success');
-      setTimeout(() => {
-        if (hasStripeLink) {
-          window.location.href = selectedPlan!.stripeLink;
-        } else {
+
+      // Same logic for error case
+      if (selectedPlan && selectedPlan.stripeLink) {
+        const stripeUrl = selectedPlan.stripeLink;
+        setTimeout(() => {
+          window.location.href = stripeUrl;
+        }, 1500);
+      } else if (selectedPlan && !selectedPlan.stripeLink) {
+        // For Enterprise plan, just show thank you
+        // Do nothing - stay on success screen
+      } else {
+        setTimeout(() => {
           openLiveDemo();
           onClose();
-        }
-      }, 2000);
+        }, 2000);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -77,9 +96,9 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden transition-all">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10"
         >
@@ -89,19 +108,25 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
         {step === 'form' ? (
           <div className="p-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-2">
-              {hasStripeLink ? `Get Started with ${selectedPlan?.name}` : 'Ready to Talk with ARIA?'}
+              {hasStripeLink 
+                ? `Get Started with ${selectedPlan?.name}` 
+                : isEnterprisePlan
+                  ? 'Contact Our Enterprise Team'
+                  : 'Ready to Talk with ARIA?'}
             </h2>
             <p className="text-slate-600 mb-6">
               {hasStripeLink 
                 ? 'Enter your details to proceed to secure checkout.' 
-                : 'Just share your contact info and start your conversation.'}
+                : isEnterprisePlan
+                  ? 'Share your details and our team will reach out to discuss custom solutions.'
+                  : 'Just share your contact info and start your conversation.'}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
-                  <input 
+                  <input
                     required type="text" name="firstName" value={formData.firstName} onChange={handleChange}
                     placeholder="John"
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
@@ -109,7 +134,7 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
-                  <input 
+                  <input
                     required type="text" name="lastName" value={formData.lastName} onChange={handleChange}
                     placeholder="Doe"
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
@@ -119,7 +144,7 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                <input 
+                <input
                   required type="email" name="email" value={formData.email} onChange={handleChange}
                   placeholder="john@company.com"
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
@@ -128,16 +153,16 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                <input 
+                <input
                   required type="tel" name="phone" value={formData.phone} onChange={handleChange}
                   placeholder="+1 (555) 123-4567"
                   className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                fullWidth 
+              <Button
+                type="submit"
+                fullWidth
                 disabled={isSubmitting}
                 className="bg-blue-600 hover:bg-blue-700 text-white mt-6"
               >
@@ -147,6 +172,8 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
                   </span>
                 ) : hasStripeLink ? (
                   'Continue to Checkout'
+                ) : isEnterprisePlan ? (
+                  'Request Enterprise Demo'
                 ) : (
                   'Start Conversation'
                 )}
@@ -160,15 +187,19 @@ const GetStartedModal: React.FC<GetStartedModalProps> = ({ isOpen, onClose, open
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">All Set!</h2>
             <p className="text-slate-600 mb-6">
-              {hasStripeLink 
-                ? 'Redirecting you to secure checkout...' 
-                : 'Starting your conversation with ARIA now...'}
+              {selectedPlan && selectedPlan.stripeLink
+                ? 'Redirecting you to secure payment...'
+                : selectedPlan && !selectedPlan.stripeLink
+                  ? 'Thank you for your interest! Our sales team will contact you shortly to discuss Enterprise solutions.'
+                  : 'Starting your conversation with ARIA now...'}
             </p>
-            <div className="animate-pulse flex gap-2 justify-center">
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-100"></div>
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-200"></div>
-            </div>
+            {!(selectedPlan && !selectedPlan.stripeLink) && (
+              <div className="animate-pulse flex gap-2 justify-center">
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-100"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce delay-200"></div>
+              </div>
+            )}
           </div>
         )}
       </div>

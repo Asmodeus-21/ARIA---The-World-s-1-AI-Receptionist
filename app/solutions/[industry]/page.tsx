@@ -54,7 +54,7 @@ interface PageProps {
  */
 export async function generateMetadata(
   props: PageProps,
-  parent: ResolvingMetadata
+  _parent: ResolvingMetadata
 ): Promise<Metadata> {
   const params = await props.params;
   const industry = getIndustryBySlug(params.industry);
@@ -118,7 +118,7 @@ function buildFAQSchema(industry: IndustryData): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: industry.faqSchema.map((faq, index) => ({
+    mainEntity: industry.faqSchema.map((faq) => ({
       '@type': 'Question',
       name: faq.question,
       acceptedAnswer: {
@@ -213,10 +213,11 @@ export default async function IndustrySolutionPage(props: PageProps): Promise<Re
     notFound();
   }
 
-  const canonicalUrl = `https://openaria.app/solutions/${industry.slug}`;
+
   const faqSchema = buildFAQSchema(industry);
   const breadcrumbSchema = buildBreadcrumbSchema(industry);
   const softwareAppSchema = buildSoftwareApplicationSchema(industry);
+
 
   return (
     <>

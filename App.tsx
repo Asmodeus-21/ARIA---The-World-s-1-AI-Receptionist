@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Analytics } from '@vercel/analytics/react';
-import { 
-  Phone, Calendar, MessageSquare, Shield, Globe, 
-  Zap, Clock, Check, Menu, X, ArrowRight,
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import {
+  Phone, Calendar, MessageSquare, Shield, Globe,
+  Zap, Clock, Check,
   PhoneOutgoing, CreditCard, Users, Database,
-  Repeat, Layers, Mic2, Briefcase, Cpu, Network, 
-  Lock, Sparkles, Activity, Server, Radio, BarChart3,
+  Repeat, Layers, Mic2, Briefcase, Cpu, Network,
+  Lock, Sparkles, Activity, Server, BarChart3,
   CheckCircle2
 } from 'lucide-react';
 import Button from './components/Button';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import GetStartedModal from './components/GetStartedModal';
-import AriaVoiceOverlay from './components/AriaVoiceOverlay';
 import LogoTicker from './components/LogoTicker';
-import TestimonialCarousel from './components/TestimonialCarousel';
 import Legal from './components/Legal';
 import SEOHead from './components/SEOHead';
 import StructuredData from './components/StructuredData';
@@ -23,21 +21,33 @@ import AIReceptionistPage from './components/AIReceptionistPage';
 import AICallAnsweringPage from './components/AICallAnsweringPage';
 import { PricingPlan } from './types';
 import { HOME_META } from './seo.config';
+import { trackLeadEvent, trackInitiateCheckout } from './utils/facebookPixel';
 
-// Declare global process for Vite's define config
-declare const process: { env: Record<string, string | undefined> };
+// Dynamic imports for heavy components
+const GetStartedModal = dynamic(() => import('./components/GetStartedModal'), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-black/50 animate-pulse" />
+});
+
+const AriaVoiceOverlay = dynamic(() => import('./components/AriaVoiceOverlay'), {
+  ssr: false,
+});
+
+const TestimonialCarousel = dynamic(() => import('./components/TestimonialCarousel'), {
+  loading: () => <div className="h-64 bg-slate-100 animate-pulse rounded-3xl" />
+});
 
 // Helper icon component since 'TrendingDown' isn't standard in all Lucide versions
 const TrendingDownIcon = ({ size, className }: { size?: number, className?: string }) => (
-  <svg 
-    width={size || 24} 
-    height={size || 24} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
+  <svg
+    width={size || 24}
+    height={size || 24}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
   >
     <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
@@ -80,40 +90,40 @@ const INTELLIGENCE_POINTS = [
 ];
 
 const IMPACT_STATS = [
-  { 
-    label: "Lead Response Time", 
-    prefix: "<", 
-    suffix: "s", 
+  {
+    label: "Lead Response Time",
+    prefix: "<",
+    suffix: "s",
     desc: "Instant engagement. OpenAria picks up immediately, preventing leads from drifting to competitors.",
     icon: Zap,
     theme: "blue",
     numeric: 1,
     isDecimal: false
   },
-  { 
-    label: "Booking Conversion", 
-    prefix: "+", 
-    suffix: "%", 
+  {
+    label: "Booking Conversion",
+    prefix: "+",
+    suffix: "%",
     desc: "Turn inquiries into revenue. OpenAria qualifies and books appointments 24/7 while you sleep.",
     icon: Calendar,
     theme: "emerald",
     numeric: 300,
     isDecimal: false
   },
-  { 
-    label: "Operational Cost", 
-    prefix: "-", 
-    suffix: "%", 
+  {
+    label: "Operational Cost",
+    prefix: "-",
+    suffix: "%",
     desc: "Slash overhead. Replace expensive call centers with a single, limitless AI receptionist.",
     icon: TrendingDownIcon,
     theme: "amber",
     numeric: 80,
     isDecimal: false
   },
-  { 
-    label: "CRM Accuracy", 
-    prefix: "", 
-    suffix: "%", 
+  {
+    label: "CRM Accuracy",
+    prefix: "",
+    suffix: "%",
     desc: "Zero data entry errors. Every detail is logged perfectly into your system instantly.",
     icon: Check,
     theme: "violet",
@@ -124,10 +134,9 @@ const IMPACT_STATS = [
 
 // --- Pricing Data ---
 
-// Retrieves env variable with multiple fallbacks (Vite + process.env compatibility)
+// Retrieves env variable (Next.js convention)
 const getEnv = (key: string) => {
-  // Try VITE_ prefixed versions first (Vite convention)
-  return (process.env as any)[`VITE_${key}`] || process.env[key] || (process.env as any)[`REACT_APP_${key}`] || (process.env as any)[`NEXT_PUBLIC_${key}`] || '';
+  return process.env[`NEXT_PUBLIC_${key}`] || '';
 };
 
 const PRICING_PLANS: PricingPlan[] = [
@@ -137,7 +146,7 @@ const PRICING_PLANS: PricingPlan[] = [
     period: "one-time setup",
     features: ["Full Platform Access", "Custom AI Agent Setup", "Live Call Handling", "CRM & Calendar Sync"],
     cta: "Start 14-Day Trial",
-    stripeLink: getEnv('STRIPE_TRIAL_LINK') || '', 
+    stripeLink: getEnv('STRIPE_TRIAL_LINK') || '',
   },
   {
     name: "Starter",
@@ -166,10 +175,7 @@ const PRICING_PLANS: PricingPlan[] = [
   }
 ];
 
-// Debug: Log pricing plans to verify env variables are loaded
-if (typeof window !== 'undefined') {
-  console.log('PRICING_PLANS loaded:', PRICING_PLANS.map(p => ({ name: p.name, stripeLink: p.stripeLink ? '✓ Loaded' : '✗ Empty' })));
-}
+
 
 // --- Components ---
 
@@ -193,7 +199,7 @@ const CountUpStats: React.FC<{ stat: typeof IMPACT_STATS[0] }> = ({ stat }) => {
 
   useEffect(() => {
     if (!hasAnimated) return;
-    
+
     let start = 0;
     const end = stat.numeric;
     const duration = 2000;
@@ -215,7 +221,7 @@ const CountUpStats: React.FC<{ stat: typeof IMPACT_STATS[0] }> = ({ stat }) => {
   }, [hasAnimated, stat.numeric]);
 
   const displayValue = stat.isDecimal ? count.toFixed(1) : Math.ceil(count);
-  
+
   // Theme classes
   const themeClasses = {
     blue: "text-blue-600 bg-blue-50 border-blue-100 group-hover:border-blue-200 group-hover:shadow-blue-200/50",
@@ -242,102 +248,6 @@ const CountUpStats: React.FC<{ stat: typeof IMPACT_STATS[0] }> = ({ stat }) => {
   );
 };
 
-const Header = ({ onOpenForm, onOpenLive, onNavigateLegal }: { onOpenForm: () => void, onOpenLive: () => void, onNavigateLegal?: (page: 'privacy' | 'terms' | 'contact') => void }) => {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const navLinks = [
-    { name: "How It Works", href: "/ai-receptionist" },
-    { name: "Features", href: "#features" },
-    { name: "Pricing", href: "#pricing" },
-    { name: "Testimonials", href: "#testimonials" },
-  ];
-
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault();
-    
-    // If it's a page link, navigate to it
-    if (href.startsWith('/')) {
-      window.location.href = href;
-      setMobileMenuOpen(false);
-      return;
-    }
-    
-    // If it's a hash link, scroll to it
-    const targetId = href.replace('#', '');
-    const element = document.getElementById(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setMobileMenuOpen(false);
-    }
-  };
-
-  return (
-    <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white font-serif font-bold text-xl shadow-lg shadow-slate-900/10">
-            A
-          </div>
-          <span className="font-semibold text-lg tracking-tight text-slate-900">OpenAria</span>
-        </div>
-
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map(link => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              onClick={(e) => handleNavClick(e, link.href)}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
-            >
-              {link.name}
-            </a>
-          ))}
-        </nav>
-
-        <div className="hidden md:flex items-center gap-4">
-          <button onClick={() => onOpenForm()} className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
-            Talk with OpenAria
-          </button>
-          <Button size="sm" onClick={onOpenForm}>Get Started</Button>
-        </div>
-
-        {/* Mobile Menu Toggle */}
-        <button className="md:hidden text-slate-900 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          {mobileMenuOpen ? <X /> : <Menu />}
-        </button>
-      </div>
-
-      {/* Mobile Nav */}
-      {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-slate-100 p-6 shadow-xl flex flex-col gap-6">
-          {navLinks.map(link => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              onClick={(e) => handleNavClick(e, link.href)} 
-              className="text-xl font-medium text-slate-900 cursor-pointer"
-            >
-              {link.name}
-            </a>
-          ))}
-          <hr className="border-slate-100" />
-          <Button variant="outline" fullWidth onClick={() => { setMobileMenuOpen(false); onOpenForm(); }}>Talk with OpenAria</Button>
-          <Button fullWidth onClick={() => { setMobileMenuOpen(false); onOpenForm(); }}>Get Started</Button>
-        </div>
-      )}
-    </header>
-  );
-};
-
-// --- Main App ---
 
 export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -379,7 +289,7 @@ export default function App() {
     setSelectedPlan(plan || null);
     setIsFormOpen(true);
   };
-  
+
   const openLive = () => setIsLiveOpen(true);
 
   const navigateToLegal = (page: 'privacy' | 'terms' | 'contact' | 'home' = 'home') => {
@@ -391,16 +301,15 @@ export default function App() {
   };
 
   // Page routing based on pathname
-  
+
   // Show AI Receptionist page
   if (pathname === '/ai-receptionist') {
     return (
       <div className="min-h-screen bg-white text-slate-900 font-sans">
-        <Analytics />
         <AIReceptionistPage openForm={() => openForm()} openLive={() => setIsLiveOpen(true)} />
-        <GetStartedModal 
-          isOpen={isFormOpen} 
-          onClose={() => setIsFormOpen(false)} 
+        <GetStartedModal
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
           openLiveDemo={() => setIsLiveOpen(true)}
         />
         <AriaVoiceOverlay
@@ -416,11 +325,10 @@ export default function App() {
   if (pathname === '/ai-call-answering') {
     return (
       <div className="min-h-screen bg-white text-slate-900 font-sans">
-        <Analytics />
         <AICallAnsweringPage openForm={() => openForm()} openLive={() => setIsLiveOpen(true)} />
-        <GetStartedModal 
-          isOpen={isFormOpen} 
-          onClose={() => setIsFormOpen(false)} 
+        <GetStartedModal
+          isOpen={isFormOpen}
+          onClose={() => setIsFormOpen(false)}
           openLiveDemo={() => setIsLiveOpen(true)}
         />
         <AriaVoiceOverlay
@@ -436,9 +344,8 @@ export default function App() {
   if (currentPage === 'legal') {
     return (
       <div className="min-h-screen bg-white text-slate-900 font-sans">
-        <Analytics />
-        <Legal 
-          initialPage={legalPage} 
+        <Legal
+          initialPage={legalPage}
           onBack={backToHome}
         />
         {/* Footer for legal pages */}
@@ -457,11 +364,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-900">
-      <Analytics />
       <SEOHead metadata={HOME_META} />
-      
+
       {/* Structured Data for Knowledge Graph Recognition */}
-      <StructuredData 
+      <StructuredData
         pricing={PRICING_PLANS.map(plan => ({
           name: plan.name,
           price: parseFloat(plan.price.replace(/[^0-9.-]+/g, '')) || 0,
@@ -469,55 +375,81 @@ export default function App() {
           description: plan.features.join(', ')
         }))}
       />
-      
+
       {/* Breadcrumb Schema for Home Page */}
-      <BreadcrumbSchema 
+      <BreadcrumbSchema
         items={[
           { name: 'Home', url: 'https://openaria.app' }
         ]}
       />
-      
+
       <Navbar onOpenForm={() => openForm()} onOpenLive={openLive} onNavigateLegal={navigateToLegal} />
 
       <main>
         {/* HERO */}
         <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1400px] h-[800px] bg-gradient-to-b from-slate-100 to-transparent rounded-[100%] blur-3xl -z-10 opacity-70" />
-          
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 shadow-sm text-slate-600 text-xs font-semibold uppercase tracking-wider mb-8">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
               Gemini 3.0 Engine Live
             </div>
-            
+
             <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-slate-900 mb-8 leading-[1]">
               OpenAria – The World's #1 <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-sky-400 to-blue-700 bg-[length:200%_auto] animate-shimmer pb-2">
                 AI Receptionist
               </span>
             </h1>
-            
+
             <p className="text-xl md:text-2xl text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
-              Professional. Reliable. Limitless. <br className="hidden md:block"/>
+              Professional. Reliable. Limitless. <br className="hidden md:block" />
               OpenAria handles every customer interaction so your business runs nonstop.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="w-full sm:w-auto h-14 px-8 text-lg">Start 14-Day Trial</Button>
-              <Button size="lg" variant="outline" onClick={() => openForm()} className="w-full sm:w-auto h-14 px-8 text-lg flex items-center gap-3">
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackInitiateCheckout('14-Day Trial', 97);
+                  openForm(PRICING_PLANS[0]);
+                }}
+                className="w-full sm:w-auto h-14 px-8 text-lg"
+              >
+                Start 14-Day Trial
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  trackLeadEvent('Hero - Watch Demo');
+                  openForm();
+                }}
+                className="w-full sm:w-auto h-14 px-8 text-lg flex items-center gap-3"
+              >
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                 Watch OpenAria in Action
               </Button>
             </div>
 
             <div className="mt-16 flex flex-col items-center gap-4">
-               <div className="flex -space-x-2">
-                  {[1,2,3,4].map(i => (
-                    <img key={i} src={`https://picsum.photos/seed/${i + 120}/60/60`} alt="User" className="w-10 h-10 rounded-full border-2 border-white" />
-                  ))}
-                  <div className="w-10 h-10 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-600">+99k</div>
-               </div>
-               <p className="text-sm text-slate-400 font-medium">Trusted by 100,000+ businesses worldwide</p>
+              <div className="flex -space-x-2">
+                {[1, 2, 3, 4].map(i => (
+                  <Image
+                    key={i}
+                    src={`https://picsum.photos/seed/${i + 120}/60/60`}
+                    alt="User avatar"
+                    width={40}
+                    height={40}
+                    className="rounded-full border-2 border-white"
+                    loading="lazy"
+                    quality={85}
+                  />
+                ))}
+                <div className="w-10 h-10 rounded-full border-2 border-white bg-slate-50 flex items-center justify-center text-xs font-bold text-slate-600">+99k</div>
+              </div>
+              <p className="text-sm text-slate-400 font-medium">Trusted by 100,000+ businesses worldwide</p>
             </div>
           </div>
         </section>
@@ -546,8 +478,8 @@ export default function App() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
               {FEATURES_FULL.map((feature, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className={`flex flex-col items-center text-center p-6 rounded-2xl border border-slate-100 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group bg-gradient-to-b from-slate-50 to-white hover:from-white hover:to-white ${feature.border}`}
                 >
                   <div className={`w-16 h-16 rounded-2xl ${feature.bg} ${feature.color} flex items-center justify-center mb-6 transition-all duration-300 ${feature.hover} group-hover:text-white shadow-sm group-hover:shadow-md group-hover:scale-110`}>
@@ -561,9 +493,9 @@ export default function App() {
             {/* Industry Solutions CTA */}
             <div className="mt-16 text-center">
               <p className="text-slate-500 text-lg mb-6">Need a solution for your specific industry?</p>
-              <Button 
-                size="lg" 
-                variant="outline" 
+              <Button
+                size="lg"
+                variant="outline"
                 onClick={() => window.location.href = '/solutions'}
               >
                 Explore Industry Solutions
@@ -594,18 +526,18 @@ export default function App() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {INTELLIGENCE_POINTS.map((point, idx) => (
-                 <div key={idx} className={`p-8 rounded-3xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 transition-all duration-300 group ${idx === 0 || idx === 9 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
-                    <div className="flex items-start justify-between mb-6">
-                       <div className={`w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center ${point.color} group-hover:scale-110 transition-transform`}>
-                          <point.icon size={24} />
-                       </div>
-                       <div className="text-xs font-mono text-slate-600">0{idx + 1}</div>
+              {INTELLIGENCE_POINTS.map((point, idx) => (
+                <div key={idx} className={`p-8 rounded-3xl border border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 transition-all duration-300 group ${idx === 0 || idx === 9 ? 'md:col-span-2 lg:col-span-2' : ''}`}>
+                  <div className="flex items-start justify-between mb-6">
+                    <div className={`w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center ${point.color} group-hover:scale-110 transition-transform`}>
+                      <point.icon size={24} />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-100 transition-colors">{point.title}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{point.desc}</p>
-                 </div>
-               ))}
+                    <div className="text-xs font-mono text-slate-600">0{idx + 1}</div>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3 group-hover:text-blue-100 transition-colors">{point.title}</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed">{point.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -613,10 +545,10 @@ export default function App() {
         {/* BUSINESS IMPACT */}
         <section className="py-24 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-             <div className="text-center mb-16">
-               <h2 className="text-4xl font-bold text-slate-900 mb-4">Measurable Business Impact</h2>
-               <p className="text-slate-500 text-lg max-w-2xl mx-auto">Real results from 100,000+ businesses using ARIA.</p>
-             </div>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-slate-900 mb-4">Measurable Business Impact</h2>
+              <p className="text-slate-500 text-lg max-w-2xl mx-auto">Real results from 100,000+ businesses using ARIA.</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {IMPACT_STATS.map((stat, i) => (
                 <CountUpStats key={i} stat={stat} />
@@ -627,80 +559,80 @@ export default function App() {
 
         {/* SETUP */}
         <section className="py-24 bg-white relative overflow-hidden">
-           <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-50"></div>
-           <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-violet-50 rounded-full blur-3xl opacity-50"></div>
+          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-50"></div>
+          <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-violet-50 rounded-full blur-3xl opacity-50"></div>
 
-           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-              <div className="text-center mb-20">
-                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wide mb-6">
-                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                    White-Glove Onboarding
-                 </div>
-                 <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-                    Expert Implementation. <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">Done For You.</span>
-                 </h2>
-                 <p className="text-slate-500 text-lg max-w-2xl mx-auto">
-                    No configuration required. Our engineering team handles the entire technical setup, ensuring a flawless integration with your existing stack.
-                 </p>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="text-center mb-20">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wide mb-6">
+                <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                White-Glove Onboarding
               </div>
-              
-              <div className="grid md:grid-cols-3 gap-8 relative">
-                 <div className="hidden md:block absolute top-16 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-blue-200 via-violet-200 to-amber-200 z-0"></div>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+                Expert Implementation. <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">Done For You.</span>
+              </h2>
+              <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+                No configuration required. Our engineering team handles the entire technical setup, ensuring a flawless integration with your existing stack.
+              </p>
+            </div>
 
-                 {[
-                   { 
-                     step: "01", 
-                     title: "We Connect Your Infrastructure", 
-                     desc: "Our team maps and links your existing phone lines, email gateways, and SMS channels securely.", 
-                     icon: Network,
-                     gradient: "from-blue-500 to-cyan-400",
-                     shadow: "shadow-blue-500/25"
-                   },
-                   { 
-                     step: "02", 
-                     title: "Deep Backend Integration", 
-                     desc: "We build custom webhooks to sync ARIA perfectly with your specific CRM, database, and calendar.", 
-                     icon: Server,
-                     gradient: "from-violet-500 to-fuchsia-400",
-                     shadow: "shadow-violet-500/25"
-                   },
-                   { 
-                     step: "03", 
-                     title: "Launch & Optimization", 
-                     desc: "We conduct rigorous testing before flipping the switch. Immediate impact, zero downtime.", 
-                     icon: Zap,
-                     gradient: "from-amber-500 to-orange-400",
-                     shadow: "shadow-amber-500/25"
-                   }
-                 ].map((item, i) => (
-                   <div key={i} className="relative z-10 group">
-                      <div className="flex flex-col items-center text-center p-8 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-300/50 transition-all duration-500 hover:-translate-y-2">
-                         <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-8 relative group-hover:scale-110 transition-transform duration-500 shadow-lg ${item.shadow}`}>
-                            <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm border-4 border-white shadow-sm z-10">
-                               {item.step}
-                            </div>
-                            <item.icon size={40} className="text-white drop-shadow-md" strokeWidth={1.5} />
-                            <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-3xl"></div>
-                         </div>
-                         <h3 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-blue-600 transition-colors">{item.title}</h3>
-                         <p className="text-slate-500 leading-relaxed text-sm">{item.desc}</p>
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              <div className="hidden md:block absolute top-16 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-blue-200 via-violet-200 to-amber-200 z-0"></div>
+
+              {[
+                {
+                  step: "01",
+                  title: "We Connect Your Infrastructure",
+                  desc: "Our team maps and links your existing phone lines, email gateways, and SMS channels securely.",
+                  icon: Network,
+                  gradient: "from-blue-500 to-cyan-400",
+                  shadow: "shadow-blue-500/25"
+                },
+                {
+                  step: "02",
+                  title: "Deep Backend Integration",
+                  desc: "We build custom webhooks to sync ARIA perfectly with your specific CRM, database, and calendar.",
+                  icon: Server,
+                  gradient: "from-violet-500 to-fuchsia-400",
+                  shadow: "shadow-violet-500/25"
+                },
+                {
+                  step: "03",
+                  title: "Launch & Optimization",
+                  desc: "We conduct rigorous testing before flipping the switch. Immediate impact, zero downtime.",
+                  icon: Zap,
+                  gradient: "from-amber-500 to-orange-400",
+                  shadow: "shadow-amber-500/25"
+                }
+              ].map((item, i) => (
+                <div key={i} className="relative z-10 group">
+                  <div className="flex flex-col items-center text-center p-8 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-300/50 transition-all duration-500 hover:-translate-y-2">
+                    <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-8 relative group-hover:scale-110 transition-transform duration-500 shadow-lg ${item.shadow}`}>
+                      <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm border-4 border-white shadow-sm z-10">
+                        {item.step}
                       </div>
-                   </div>
-                 ))}
-              </div>
-           </div>
+                      <item.icon size={40} className="text-white drop-shadow-md" strokeWidth={1.5} />
+                      <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300 rounded-3xl"></div>
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-4 group-hover:text-blue-600 transition-colors">{item.title}</h3>
+                    <p className="text-slate-500 leading-relaxed text-sm">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         {/* TESTIMONIALS */}
         <section id="testimonials" className="py-24 bg-slate-50 overflow-hidden relative scroll-mt-28">
           <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100%25\' height=\'100%25\' viewBox=\'0 0 1000 500\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M238,300 Q200,280 180,320 T150,350 Q180,380 220,360 T238,300 M500,100 Q450,80 420,120 T400,180 Q450,220 520,200 T550,140 Q540,110 500,100 M750,150 Q700,120 680,160 T650,220 Q700,250 780,230 T800,180 Q790,160 750,150\' fill=\'%23000\' /%3E%3C/svg%3E")' }}></div>
-          
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-xs font-semibold uppercase tracking-wide mb-6">
-                 <Globe size={12} />
-                 Global Impact
+                <Globe size={12} />
+                Global Impact
               </div>
               <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">
                 Loved by Businesses <br />
@@ -710,9 +642,9 @@ export default function App() {
                 Join 100,000+ innovative companies using ARIA to transform their customer experience.
               </p>
             </div>
-            
+
             <TestimonialCarousel />
-            
+
             <div className="mt-16 text-center">
               <Button size="lg" variant="outline" onClick={() => openForm()}>
                 Read More Customer Stories
@@ -731,12 +663,12 @@ export default function App() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
               {PRICING_PLANS.map((plan, idx) => (
-                <div 
+                <div
                   key={idx}
                   className={`
                     relative flex flex-col p-8 rounded-[2rem] transition-all duration-300 group
-                    ${plan.isPopular 
-                      ? 'bg-slate-900 text-white shadow-2xl scale-105 z-10 border border-slate-700' 
+                    ${plan.isPopular
+                      ? 'bg-slate-900 text-white shadow-2xl scale-105 z-10 border border-slate-700'
                       : 'bg-white text-slate-900 border border-slate-200 hover:border-blue-400 hover:shadow-2xl hover:scale-105 hover:z-20'
                     }
                   `}
@@ -757,9 +689,9 @@ export default function App() {
                     <ul className={`space-y-4 mb-8 text-sm flex-1 ${plan.isPopular ? 'text-slate-300' : 'text-slate-600'}`}>
                       {plan.features.map((feature, fIdx) => (
                         <li key={fIdx} className="flex items-start gap-3">
-                          <CheckCircle2 
-                            size={18} 
-                            className={`flex-shrink-0 mt-0.5 ${plan.isPopular ? 'text-blue-400' : 'text-blue-600'}`} 
+                          <CheckCircle2
+                            size={18}
+                            className={`flex-shrink-0 mt-0.5 ${plan.isPopular ? 'text-blue-400' : 'text-blue-600'}`}
                           />
                           <span className="leading-snug">{feature}</span>
                         </li>
@@ -768,10 +700,14 @@ export default function App() {
                   )}
 
                   <div className="mt-auto">
-                    <Button 
-                      fullWidth 
-                      variant={plan.isPopular ? 'white' : 'outline'} 
-                      onClick={() => openForm(plan)}
+                    <Button
+                      fullWidth
+                      variant={plan.isPopular ? 'white' : 'outline'}
+                      onClick={() => {
+                        const planValue = plan.price === 'Custom' ? 0 : parseFloat(plan.price.replace(/[^0-9.-]+/g, ''));
+                        trackInitiateCheckout(plan.name, planValue);
+                        openForm(plan);
+                      }}
                       className={!plan.isPopular ? 'group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900' : ''}
                     >
                       {plan.cta}
@@ -805,8 +741,25 @@ export default function App() {
           <div className="max-w-3xl mx-auto px-4">
             <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-8 tracking-tight">Transform Your Business Today</h2>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" onClick={() => openForm(PRICING_PLANS[0])} className="h-14 px-10 text-lg">Start 14-Day Trial</Button>
-              <Button size="lg" variant="secondary" onClick={() => openForm()} className="h-14 px-10 text-lg flex items-center gap-2">
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackInitiateCheckout('14-Day Trial - Footer CTA', 97);
+                  openForm(PRICING_PLANS[0]);
+                }}
+                className="h-14 px-10 text-lg"
+              >
+                Start 14-Day Trial
+              </Button>
+              <Button
+                size="lg"
+                variant="secondary"
+                onClick={() => {
+                  trackLeadEvent('Footer CTA - Speak with ARIA');
+                  openForm();
+                }}
+                className="h-14 px-10 text-lg flex items-center gap-2"
+              >
                 <Phone size={20} /> Speak with ARIA
               </Button>
             </div>
@@ -818,24 +771,32 @@ export default function App() {
 
         {/* Mobile Sticky CTA */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-200 z-30 safe-bottom">
-           <Button fullWidth onClick={() => openForm(PRICING_PLANS[0])}>Start 14-Day Trial</Button>
+          <Button
+            fullWidth
+            onClick={() => {
+              trackInitiateCheckout('14-Day Trial - Mobile Sticky', 97);
+              openForm(PRICING_PLANS[0]);
+            }}
+          >
+            Start 14-Day Trial
+          </Button>
         </div>
 
       </main>
 
-    <GetStartedModal 
-  isOpen={isFormOpen} 
-  onClose={() => setIsFormOpen(false)} 
-  openLiveDemo={() => setIsLiveOpen(true)}
-  selectedPlan={selectedPlan}
-/>
+      <GetStartedModal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        openLiveDemo={() => setIsLiveOpen(true)}
+        selectedPlan={selectedPlan}
+      />
 
-<AriaVoiceOverlay
-  agentId={elevenLabsAgentId}
-  isOpen={isLiveOpen}
-  onClose={() => setIsLiveOpen(false)}
-/>
+      <AriaVoiceOverlay
+        agentId={elevenLabsAgentId}
+        isOpen={isLiveOpen}
+        onClose={() => setIsLiveOpen(false)}
+      />
 
-</div>
+    </div>
   );
 };

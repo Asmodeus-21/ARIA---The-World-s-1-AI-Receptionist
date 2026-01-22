@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { Helmet } from 'react-helmet-async';
 import { ChevronRight, CheckCircle2, Target, TrendingUp, Clock, Zap } from 'lucide-react';
 import Button from './Button';
 import BreadcrumbSchema from './BreadcrumbSchema';
@@ -47,29 +46,6 @@ const IndustrySolutionPage: React.FC<IndustrySolutionPageProps> = ({ industry: p
 
   return (
     <>
-      {/* Dynamic SEO Head */}
-      <Helmet>
-        <title>{industry.metaTitle}</title>
-        <meta name="description" content={industry.metaDescription} />
-        <meta name="keywords" content={industry.keywords.join(', ')} />
-        <link rel="canonical" href={canonicalUrl} />
-        
-        {/* Open Graph */}
-        <meta property="og:title" content={industry.metaTitle} />
-        <meta property="og:description" content={industry.metaDescription} />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="OpenAria" />
-        
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={industry.metaTitle} />
-        <meta name="twitter:description" content={industry.metaDescription} />
-
-        {/* Caching headers for performance */}
-        <meta httpEquiv="cache-control" content="public, max-age=3600, s-maxage=86400" />
-      </Helmet>
-
       {/* Structured Data */}
       <BreadcrumbSchema items={breadcrumbItems} />
       <StructuredData pricing={[]} />

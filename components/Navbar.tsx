@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import Button from './Button';
 import { INDUSTRIES_DATA } from '../data/industriesSemanticData';
+import { trackLeadEvent } from '../utils/facebookPixel';
 
 interface NavbarProps {
   onOpenForm: () => void;
@@ -9,7 +10,7 @@ interface NavbarProps {
   onNavigateLegal?: (page: 'privacy' | 'terms' | 'contact') => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal }) => {
+const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive: _onOpenLive, onNavigateLegal: _onNavigateLegal }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [solutionsDropdownOpen, setSolutionsDropdownOpen] = useState(false);
@@ -59,9 +60,8 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-        scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-3' : 'bg-transparent py-5'
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
         {/* Logo */}
@@ -103,11 +103,10 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
 
             {/* Dropdown Menu */}
             <div
-              className={`absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden transition-all duration-200 origin-top-left ${
-                solutionsDropdownOpen
-                  ? 'opacity-100 visible scale-100'
-                  : 'opacity-0 invisible scale-95 pointer-events-none'
-              }`}
+              className={`absolute left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden transition-all duration-200 origin-top-left ${solutionsDropdownOpen
+                ? 'opacity-100 visible scale-100'
+                : 'opacity-0 invisible scale-95 pointer-events-none'
+                }`}
             >
               <div className="py-2">
                 {/* Top 5 Industries */}
@@ -150,12 +149,21 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
         {/* Desktop CTA Buttons */}
         <div className="hidden md:flex items-center gap-4">
           <button
-            onClick={() => onOpenForm()}
+            onClick={() => {
+              trackLeadEvent('Navbar - Talk with ARIA');
+              onOpenForm();
+            }}
             className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors"
           >
             Talk with ARIA
           </button>
-          <Button size="sm" onClick={() => onOpenForm()}>
+          <Button
+            size="sm"
+            onClick={() => {
+              trackLeadEvent('Navbar - Get Started');
+              onOpenForm();
+            }}
+          >
             Get Started
           </Button>
         </div>
@@ -234,6 +242,7 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
             variant="outline"
             fullWidth
             onClick={() => {
+              trackLeadEvent('Mobile Menu - Talk with ARIA');
               setMobileMenuOpen(false);
               onOpenForm();
             }}
@@ -243,6 +252,7 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenForm, onOpenLive, onNavigateLegal
           <Button
             fullWidth
             onClick={() => {
+              trackLeadEvent('Mobile Menu - Get Started');
               setMobileMenuOpen(false);
               onOpenForm();
             }}
